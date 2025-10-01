@@ -929,13 +929,177 @@ function Products() {
   );
 }
 
+// function Orders() {
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const { data, loading, error } = useAPI(
+//     () => clerkAPI.getOrders(statusFilter),
+//     [statusFilter]
+//   );
+
+//   if (loading) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} />;
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">
+//             Order Management
+//           </h3>
+//           <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
+//         </div>
+//         <select
+//           value={statusFilter}
+//           onChange={(e) => setStatusFilter(e.target.value)}
+//           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+//         >
+//           <option value="">All Orders</option>
+//           <option value="PENDING">Pending</option>
+//           <option value="PAID">Paid</option>
+//           <option value="FULFILLED">Fulfilled</option>
+//           <option value="CANCELLED">Cancelled</option>
+//         </select>
+//       </div>
+
+//       <div className="space-y-4">
+//         {data?.orders?.map((order, i) => (
+//           <div
+//             key={i}
+//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow"
+//           >
+//             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+//               <div className="flex-1">
+//                 <div className="flex items-center gap-3 mb-2">
+//                   <span className="font-bold text-lg text-neutral-800">
+//                     #{order.id.substring(0, 8)}
+//                   </span>
+//                   <span
+//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
+//                       order.status === "FULFILLED"
+//                         ? "bg-emerald-100 text-emerald-700"
+//                         : order.status === "PENDING"
+//                         ? "bg-amber-100 text-amber-700"
+//                         : order.status === "PAID"
+//                         ? "bg-blue-100 text-blue-700"
+//                         : "bg-red-100 text-red-700"
+//                     }`}
+//                   >
+//                     {order.status}
+//                   </span>
+//                 </div>
+//                 <p className="text-neutral-600 mb-1">
+//                   <span className="font-semibold">{order.buyer_name}</span> •{" "}
+//                   {order.buyer_phone}
+//                 </p>
+//                 <p className="text-sm text-neutral-500">
+//                   {new Date(order.created_at).toLocaleDateString()} •{" "}
+//                   {order.items?.length || 0} items
+//                 </p>
+//               </div>
+//               <div className="flex items-center gap-4">
+//                 <div className="text-right">
+//                   <p className="text-sm text-neutral-500">Amount</p>
+//                   <p className="text-2xl font-bold text-emerald-600">
+//                     ${order.total_amount}
+//                   </p>
+//                 </div>
+//                 <button className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-colors">
+//                   View Details
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
 function Orders() {
   const [statusFilter, setStatusFilter] = useState("");
-  const { data, loading, error } = useAPI(
+  const [mode, setMode] = useState("LIST"); // LIST | DETAILS
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const { data, loading, error, refetch } = useAPI(
     () => clerkAPI.getOrders(statusFilter),
     [statusFilter]
   );
 
+  const handleViewDetails = async (orderId) => {
+    try {
+      const details = await clerkAPI.getOrderDetails(orderId);
+      setSelectedOrder(details);
+      setMode("DETAILS");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleUpdateStatus = async (orderId, status) => {
+    try {
+      await clerkAPI.updateOrderStatus(orderId, status);
+      alert(`Order status updated to ${status}`);
+      await refetch();
+      setMode("LIST");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // --- DETAILS Mode ---
+  if (mode === "DETAILS" && selectedOrder) {
+    return (
+      <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
+        <h3 className="text-2xl font-bold">
+          Order #{selectedOrder.id.substring(0, 8)}
+        </h3>
+        <p className="text-neutral-600">
+          Buyer:{" "}
+          <span className="font-semibold">{selectedOrder.buyer_name}</span> •{" "}
+          {selectedOrder.buyer_phone}
+        </p>
+        <p className="text-neutral-600">
+          Hub: {selectedOrder.hub_name} ({selectedOrder.hub_location})
+        </p>
+        <p>Status: {selectedOrder.status}</p>
+        <p>Created at: {new Date(selectedOrder.created_at).toLocaleString()}</p>
+
+        <div className="border-t pt-4 space-y-2">
+          {selectedOrder.items.map((item, idx) => (
+            <div key={idx} className="flex justify-between">
+              <span>
+                {item.produce_name} × {item.quantity} {item.unit}
+              </span>
+              <span>${(item.unit_price * item.quantity).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-between font-bold text-lg">
+          <span>Total</span>
+          <span>${selectedOrder.total_amount}</span>
+        </div>
+
+        <div className="flex gap-4 mt-4">
+          {selectedOrder.status === "PENDING" && (
+            <button
+              onClick={() => handleUpdateStatus(selectedOrder.id, "FULFILLED")}
+              className="bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700"
+            >
+              Mark as Fulfilled
+            </button>
+          )}
+          <button
+            onClick={() => setMode("LIST")}
+            className="px-4 py-2 border rounded-xl"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- LIST Mode ---
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
@@ -1003,7 +1167,10 @@ function Orders() {
                     ${order.total_amount}
                   </p>
                 </div>
-                <button className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-colors">
+                <button
+                  onClick={() => handleViewDetails(order.id)}
+                  className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
+                >
                   View Details
                 </button>
               </div>

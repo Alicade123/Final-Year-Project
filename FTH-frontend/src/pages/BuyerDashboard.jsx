@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import { buyerAPI } from "../services/api";
+import CheckoutModal from "../components/CheckoutModal";
 const menuItems = [
   { key: "overview", label: "Dashboard", icon: LayoutDashboard },
   { key: "marketplace", label: "Marketplace", icon: ShoppingCart },
@@ -85,15 +86,15 @@ export default function BuyerDashboard() {
   return (
     <div className="flex h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-72 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white flex-col shadow-2xl">
-        <div className="p-6 border-b border-blue-700/50">
+      <aside className="hidden lg:flex w-72 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-900 text-white flex-col shadow-2xl">
+        <div className="p-6 border-b border-emerald-700/50">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
               <ShoppingCart className="text-white" size={24} />
             </div>
             <div>
               <h1 className="font-bold text-xl">Buyer Portal</h1>
-              <p className="text-blue-300 text-xs">Shop Fresh Produce</p>
+              <p className="text-green-300 text-xs">Shop Fresh Produce</p>
             </div>
           </div>
         </div>
@@ -108,8 +109,8 @@ export default function BuyerDashboard() {
                 onClick={() => setActive(item.key)}
                 className={`group flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg scale-105"
-                    : "hover:bg-blue-700/50 text-blue-100"
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg scale-105"
+                    : "hover:bg-emerald-700/50 text-emerald-100"
                 }`}
               >
                 <Icon
@@ -117,7 +118,7 @@ export default function BuyerDashboard() {
                   className={
                     isActive
                       ? "text-white"
-                      : "text-blue-300 group-hover:text-white"
+                      : "text-emerald-300 group-hover:text-white"
                   }
                 />
                 <span className={isActive ? "text-white" : ""}>
@@ -133,10 +134,10 @@ export default function BuyerDashboard() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-blue-700/50">
+        <div className="p-4 border-t border-green-700/50">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-blue-100 hover:bg-red-900/50 transition-all"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-green-100 hover:bg-red-900/50 transition-all"
           >
             <LogOut size={20} />
             <span>Logout</span>
@@ -151,22 +152,22 @@ export default function BuyerDashboard() {
           onClick={() => setSidebarOpen(false)}
         >
           <aside
-            className="w-72 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white h-full shadow-2xl"
+            className="w-72 bg-gradient-to-b from-green-900 via-green-800 to-green-900 text-white h-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-blue-700/50 flex items-center justify-between">
+            <div className="p-6 border-b border-green-700/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
                   <ShoppingCart className="text-white" size={24} />
                 </div>
                 <div>
                   <h1 className="font-bold text-xl">Buyer Portal</h1>
-                  <p className="text-blue-300 text-xs">Shop Fresh Produce</p>
+                  <p className="text-green-300 text-xs">Shop Fresh Produce</p>
                 </div>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="text-blue-300 hover:text-white"
+                className="text-green-300 hover:text-white"
               >
                 <X size={24} />
               </button>
@@ -185,8 +186,8 @@ export default function BuyerDashboard() {
                     }}
                     className={`group flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg"
-                        : "hover:bg-blue-700/50 text-blue-100"
+                        ? "bg-gradient-to-r from-green-600 to-indigo-600 shadow-lg"
+                        : "hover:bg-green-700/50 text-green-100"
                     }`}
                   >
                     <Icon size={20} />
@@ -206,7 +207,7 @@ export default function BuyerDashboard() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-neutral-600 hover:text-blue-600"
+              className="lg:hidden text-neutral-600 hover:text-green-600"
             >
               <Menu size={24} />
             </button>
@@ -229,7 +230,7 @@ export default function BuyerDashboard() {
               <input
                 type="text"
                 placeholder="Search products..."
-                className="pl-10 pr-4 py-2 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent w-64"
               />
             </div>
 
@@ -245,7 +246,7 @@ export default function BuyerDashboard() {
                 </p>
                 <p className="text-xs text-neutral-500">Regular Customer</p>
               </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
                 BA
               </div>
             </div>
@@ -278,7 +279,7 @@ export default function BuyerDashboard() {
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-12">
-      <Loader2 className="animate-spin text-blue-600" size={48} />
+      <Loader2 className="animate-spin text-green-600" size={48} />
     </div>
   );
 }
@@ -392,8 +393,8 @@ function Overview() {
             Quick Actions
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <button className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 hover:border-blue-400 transition-all text-left">
-              <ShoppingCart className="text-blue-600 mb-3" size={32} />
+            <button className="p-6 bg-gradient-to-br from-green-50 to-indigo-50 rounded-xl border-2 border-green-200 hover:border-green-400 transition-all text-left">
+              <ShoppingCart className="text-green-600 mb-3" size={32} />
               <h4 className="font-bold text-neutral-800">Browse Products</h4>
               <p className="text-sm text-neutral-600 mt-1">
                 Explore marketplace
@@ -409,15 +410,15 @@ function Overview() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
+        <div className="bg-gradient-to-br from-green-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
           <h3 className="text-xl font-bold mb-4">Featured</h3>
           <div className="space-y-3">
             <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
-              <p className="text-sm text-blue-100">Fresh Tomatoes</p>
+              <p className="text-sm text-green-100">Fresh Tomatoes</p>
               <p className="text-2xl font-bold">$0.80/Kg</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
-              <p className="text-sm text-blue-100">Maize - Premium</p>
+              <p className="text-sm text-green-100">Maize - Premium</p>
               <p className="text-2xl font-bold">$1.20/Kg</p>
             </div>
           </div>
@@ -470,7 +471,7 @@ function Marketplace({
             onChange={(e) =>
               setFilters({ ...filters, category: e.target.value })
             }
-            className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option value="">All Categories</option>
             {categories?.map((cat) => (
@@ -482,7 +483,7 @@ function Marketplace({
           <select
             value={filters.hubId}
             onChange={(e) => setFilters({ ...filters, hubId: e.target.value })}
-            className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option value="">All Hubs</option>
             {hubs?.map((hub) => (
@@ -496,7 +497,7 @@ function Marketplace({
             placeholder="Search products..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           <button
             onClick={() => setShowCart(true)}
@@ -558,7 +559,7 @@ function ProductCard({ product, onAddToCart }) {
             {product.quantity} {product.unit} available
           </span>
         </div>
-        <p className="text-blue-600 font-bold text-2xl mb-4">
+        <p className="text-green-600 font-bold text-2xl mb-4">
           ${product.price_per_unit}/{product.unit}
         </p>
 
@@ -587,7 +588,7 @@ function ProductCard({ product, onAddToCart }) {
 
         <button
           onClick={() => onAddToCart(product, quantity)}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-green-600 to-indigo-600 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
         >
           <ShoppingCart size={18} />
           Add to Cart
@@ -598,6 +599,130 @@ function ProductCard({ product, onAddToCart }) {
 }
 
 // Cart Modal Component
+//const [isModalOpen, setShowCheckout] = useState(false);
+// function CartModal({
+//   cart,
+//   onClose,
+//   onUpdateQuantity,
+//   onRemove,
+//   onClear,
+//   total,
+// }) {
+//   return (
+//     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+//       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+//         <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 flex items-center justify-between">
+//           <h2 className="text-2xl font-bold text-white">Shopping Cart</h2>
+//           <button
+//             onClick={onClose}
+//             className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+//           >
+//             <X size={24} />
+//           </button>
+//         </div>
+
+//         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+//           {cart.length === 0 ? (
+//             <div className="text-center py-12">
+//               <ShoppingCart
+//                 className="mx-auto text-neutral-300 mb-4"
+//                 size={64}
+//               />
+//               <p className="text-neutral-600">Your cart is empty</p>
+//             </div>
+//           ) : (
+//             <div className="space-y-4">
+//               {cart.map((item, i) => (
+//                 <div
+//                   key={i}
+//                   className="flex items-center gap-4 p-4 bg-neutral-50 rounded-xl"
+//                 >
+//                   <div className="flex-1">
+//                     <h4 className="font-bold text-neutral-800">
+//                       {item.produce_name}
+//                     </h4>
+//                     <p className="text-sm text-neutral-600">
+//                       ${item.price_per_unit}/{item.unit}
+//                     </p>
+//                   </div>
+//                   <div className="flex items-center gap-2">
+//                     <button
+//                       onClick={() =>
+//                         onUpdateQuantity(item.id, item.quantity - 1)
+//                       }
+//                       className="p-1 bg-neutral-200 rounded"
+//                     >
+//                       <Minus size={16} />
+//                     </button>
+//                     <span className="w-12 text-center font-semibold">
+//                       {item.quantity}
+//                     </span>
+//                     <button
+//                       onClick={() =>
+//                         onUpdateQuantity(item.id, item.quantity + 1)
+//                       }
+//                       className="p-1 bg-neutral-200 rounded"
+//                     >
+//                       <Plus size={16} />
+//                     </button>
+//                   </div>
+//                   <div className="text-right">
+//                     <p className="font-bold text-green-600">
+//                       ${(item.price_per_unit * item.quantity).toFixed(2)}
+//                     </p>
+//                     <button
+//                       onClick={() => onRemove(item.id)}
+//                       className="text-red-600 text-sm hover:underline"
+//                     >
+//                       Remove
+//                     </button>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
+//         </div>
+
+//         {cart.length > 0 && (
+//           <div className="border-t border-neutral-200 p-6">
+//             <div className="flex items-center justify-between mb-4">
+//               <span className="text-xl font-bold text-neutral-800">Total:</span>
+//               <span className="text-3xl font-bold text-green-600">
+//                 ${total.toFixed(2)}
+//               </span>
+//             </div>
+//             <div className="flex gap-3">
+//               <button
+//                 onClick={onClear}
+//                 className="flex-1 border-2 border-neutral-300 text-neutral-700 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-50 transition-all"
+//               >
+//                 Clear Cart
+//               </button>
+//               <button
+//                 onClick={() => setShowCheckout(true)}
+//                 className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+//               >
+//                 Checkout
+//               </button>
+
+//               {showCheckout && (
+//                 <CheckoutModal
+//                   cart={cart}
+//                   hubId={selectedHubId} // you must pass current hub context here
+//                   onClose={() => setShowCheckout(false)}
+//                   onSuccess={(order) => {
+//                     onClear(); // clear cart after success
+//                     // Optionally redirect to payment page with order.id
+//                   }}
+//                 />
+//               )}
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
 function CartModal({
   cart,
   onClose,
@@ -605,10 +730,14 @@ function CartModal({
   onRemove,
   onClear,
   total,
+  selectedHubId = "27a3df8b-d51b-49e1-a2b8-2cda367fe368", // pass hubId context from Marketplace
 }) {
+  const [showCheckout, setShowCheckout] = useState(false);
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">Shopping Cart</h2>
           <button
@@ -619,6 +748,7 @@ function CartModal({
           </button>
         </div>
 
+        {/* Cart Items */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {cart.length === 0 ? (
             <div className="text-center py-12">
@@ -643,6 +773,8 @@ function CartModal({
                       ${item.price_per_unit}/{item.unit}
                     </p>
                   </div>
+
+                  {/* Quantity Controls */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() =>
@@ -664,8 +796,10 @@ function CartModal({
                       <Plus size={16} />
                     </button>
                   </div>
+
+                  {/* Subtotal + Remove */}
                   <div className="text-right">
-                    <p className="font-bold text-blue-600">
+                    <p className="font-bold text-green-600">
                       ${(item.price_per_unit * item.quantity).toFixed(2)}
                     </p>
                     <button
@@ -681,43 +815,232 @@ function CartModal({
           )}
         </div>
 
+        {/* Footer Actions */}
         {cart.length > 0 && (
           <div className="border-t border-neutral-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-xl font-bold text-neutral-800">Total:</span>
-              <span className="text-3xl font-bold text-blue-600">
+              <span className="text-3xl font-bold text-green-600">
                 ${total.toFixed(2)}
               </span>
             </div>
+
             <div className="flex gap-3">
+              {/* Clear */}
               <button
                 onClick={onClear}
                 className="flex-1 border-2 border-neutral-300 text-neutral-700 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-50 transition-all"
               >
                 Clear Cart
               </button>
-              <button className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
+
+              {/* Checkout */}
+              <button
+                onClick={() => setShowCheckout(true)}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
                 Checkout
               </button>
             </div>
           </div>
+        )}
+
+        {/* Checkout Modal */}
+        {showCheckout && (
+          <CheckoutModal
+            cart={cart}
+            hubId={selectedHubId}
+            onClose={() => setShowCheckout(false)}
+            onSuccess={(order) => {
+              onClear(); // clear cart after success
+              setShowCheckout(false);
+              // optionally redirect: navigate(`/orders/${order.id}`)
+            }}
+          />
         )}
       </div>
     </div>
   );
 }
 
-// Orders Component
+// // Orders Component
+// function Orders() {
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const { data, loading, error } = useAPI(
+//     () => buyerAPI.getMyOrders(statusFilter),
+//     [statusFilter]
+//   );
+
+//   if (loading) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} />;
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">My Orders</h3>
+//           <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
+//         </div>
+//         <select
+//           value={statusFilter}
+//           onChange={(e) => setStatusFilter(e.target.value)}
+//           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+//         >
+//           <option value="">All Orders</option>
+//           <option value="PENDING">Pending</option>
+//           <option value="PAID">Paid</option>
+//           <option value="FULFILLED">Fulfilled</option>
+//           <option value="CANCELLED">Cancelled</option>
+//         </select>
+//       </div>
+
+//       <div className="space-y-4">
+//         {data?.orders?.map((order, i) => (
+//           <div
+//             key={i}
+//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow"
+//           >
+//             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+//               <div className="flex-1">
+//                 <div className="flex items-center gap-3 mb-2">
+//                   <span className="font-bold text-lg text-neutral-800">
+//                     #{order.id.substring(0, 8)}
+//                   </span>
+//                   <span
+//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
+//                       order.status === "FULFILLED"
+//                         ? "bg-emerald-100 text-emerald-700"
+//                         : order.status === "PENDING"
+//                         ? "bg-amber-100 text-amber-700"
+//                         : order.status === "PAID"
+//                         ? "bg-green-100 text-green-700"
+//                         : "bg-red-100 text-red-700"
+//                     }`}
+//                   >
+//                     {order.status}
+//                   </span>
+//                 </div>
+//                 <p className="text-neutral-600 mb-1">
+//                   {order.hub_name} • {order.items?.length || 0} items
+//                 </p>
+//                 <p className="text-sm text-neutral-500">
+//                   {new Date(order.created_at).toLocaleDateString()}
+//                 </p>
+//               </div>
+//               <div className="flex items-center gap-4">
+//                 <div className="text-right">
+//                   <p className="text-sm text-neutral-500">Total</p>
+//                   <p className="text-2xl font-bold text-green-600">
+//                     ${order.total_amount}
+//                   </p>
+//                 </div>
+//                 <button className="bg-green-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors">
+//                   View Details
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
 function Orders() {
   const [statusFilter, setStatusFilter] = useState("");
-  const { data, loading, error } = useAPI(
+  const [mode, setMode] = useState("LIST"); // LIST | DETAILS | CANCEL | PAYMENT
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const { data, loading, error, refetch } = useAPI(
     () => buyerAPI.getMyOrders(statusFilter),
     [statusFilter]
   );
 
+  const handleViewDetails = async (order) => {
+    const details = await buyerAPI.getOrderDetails(order.id);
+    setSelectedOrder(details);
+    setMode("DETAILS");
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    try {
+      await buyerAPI.cancelOrder(orderId);
+      await refetch();
+      setMode("LIST");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handlePayment = async (orderId, method) => {
+    try {
+      await buyerAPI.initiatePayment(orderId, { method });
+      await refetch();
+      setMode("LIST");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // ---- Render Modes ----
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
+  if (mode === "DETAILS" && selectedOrder) {
+    return (
+      <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
+        <h3 className="text-2xl font-bold">
+          Order #{selectedOrder.id.substring(0, 8)}
+        </h3>
+        <p className="text-neutral-600">
+          Hub: {selectedOrder.hub_name} ({selectedOrder.hub_location})
+        </p>
+        <p>Status: {selectedOrder.status}</p>
+
+        <div className="border-t pt-4 space-y-2">
+          {selectedOrder.items.map((item, idx) => (
+            <div key={idx} className="flex justify-between">
+              <span>
+                {item.produce_name} × {item.quantity} {item.unit}
+              </span>
+              <span>${item.price}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-between font-bold text-lg">
+          <span>Total</span>
+          <span>${selectedOrder.total_amount}</span>
+        </div>
+
+        <div className="flex gap-4">
+          {selectedOrder.status === "PENDING" && (
+            <>
+              <button
+                onClick={() => handleCancelOrder(selectedOrder.id)}
+                className="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700"
+              >
+                Cancel Order
+              </button>
+              <button
+                onClick={() => handlePayment(selectedOrder.id, "MOBILE_MONEY")}
+                className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
+              >
+                Pay Now
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => setMode("LIST")}
+            className="px-4 py-2 border rounded-xl"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Default LIST Mode ----
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -728,7 +1051,7 @@ function Orders() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <option value="">All Orders</option>
           <option value="PENDING">Pending</option>
@@ -757,7 +1080,7 @@ function Orders() {
                         : order.status === "PENDING"
                         ? "bg-amber-100 text-amber-700"
                         : order.status === "PAID"
-                        ? "bg-blue-100 text-blue-700"
+                        ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
                     }`}
                   >
@@ -774,11 +1097,14 @@ function Orders() {
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <p className="text-sm text-neutral-500">Total</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-green-600">
                     ${order.total_amount}
                   </p>
                 </div>
-                <button className="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+                <button
+                  onClick={() => handleViewDetails(order)}
+                  className="bg-green-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors"
+                >
                   View Details
                 </button>
               </div>
@@ -825,7 +1151,9 @@ function PurchaseHistory() {
                   })}
                 </span>
                 <div className="text-right">
-                  <p className="font-bold text-blue-600">${item.total_spent}</p>
+                  <p className="font-bold text-green-600">
+                    ${item.total_spent}
+                  </p>
                   <p className="text-sm text-neutral-500">
                     {item.order_count} orders
                   </p>
@@ -892,12 +1220,12 @@ function Notifications() {
           <div
             key={i}
             className={`bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow ${
-              !notif.is_read ? "border-l-4 border-l-blue-500" : ""
+              !notif.is_read ? "border-l-4 border-l-green-500" : ""
             }`}
           >
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-blue-100">
-                <Bell className="text-blue-600" size={20} />
+              <div className="p-3 rounded-xl bg-green-100">
+                <Bell className="text-green-600" size={20} />
               </div>
               <div className="flex-1">
                 <h4
@@ -913,7 +1241,7 @@ function Notifications() {
                 </p>
               </div>
               {!notif.is_read && (
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
               )}
             </div>
           </div>
@@ -956,7 +1284,7 @@ function SettingsTab() {
                 onChange={(e) =>
                   setFormData({ ...formData, fullName: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -969,7 +1297,7 @@ function SettingsTab() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -982,29 +1310,29 @@ function SettingsTab() {
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
-            <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
+            <button className="bg-gradient-to-r from-green-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
               Save Changes
             </button>
           </div>
         </div>
 
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-green-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
             <h4 className="text-lg font-bold mb-4">Account Status</h4>
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-blue-100">Member Since</span>
+                <span className="text-green-100">Member Since</span>
                 <span className="font-bold">Jan 2025</span>
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-blue-100">Total Orders</span>
+                <span className="text-green-100">Total Orders</span>
                 <span className="font-bold">45</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-blue-100">Status</span>
+                <span className="text-green-100">Status</span>
                 <span className="font-bold flex items-center gap-1">
                   <CheckCircle size={16} />
                   Active
