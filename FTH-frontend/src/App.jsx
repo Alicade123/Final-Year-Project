@@ -5,7 +5,6 @@ import ClerkDashboard from "./pages/ClerkDashboard";
 import BuyerDashboard from "./pages/BuyerDashboard";
 import FarmerDashboard from "./pages/FarmerDashboard";
 import LoginPage from "./pages/LoginPage";
-// import Navbar from "./components/Navbar";
 
 export default function App() {
   return (

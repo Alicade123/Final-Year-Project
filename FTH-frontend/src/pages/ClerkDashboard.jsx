@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { clerkAPI } from "../services/api";
 import { useAPI, useAPICall } from "../hooks/useAPI";
-
+import { ProductModal } from "../components/ProductModel";
+import { UserModal } from "../components/FarmerModel";
 const menuItems = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "farmers", label: "Farmers", icon: Users },
@@ -400,19 +401,184 @@ function Overview() {
   );
 }
 
-// Farmers Component with API Integration
+// // // Farmers Component with API Integration
+// function Farmers() {
+//   const [page, setPage] = useState(1);
+//   const { data, loading, error, refetch } = useAPI(
+//     () => clerkAPI.getFarmers(page, 20),
+//     [page]
+//   );
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+
+//   if (loading) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">
+//             Registered Farmers
+//           </h3>
+//           <p className="text-neutral-500">Total: {data?.total || 0} farmers</p>
+//         </div>
+//         <button className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+//           <Plus size={18} />
+//           Add Farmer
+//         </button>
+//       </div>
+
+//       <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden">
+//         <div className="overflow-x-auto">
+//           <table className="w-full">
+//             <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
+//               <tr>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Name
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Phone
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Location
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Deliveries
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Status
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Actions
+//                 </th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {data?.farmers?.map((farmer, i) => (
+//                 <tr
+//                   key={i}
+//                   className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors"
+//                 >
+//                   <td className="px-6 py-4 font-medium text-neutral-800">
+//                     {farmer.full_name}
+//                   </td>
+//                   <td className="px-6 py-4 text-neutral-600">{farmer.phone}</td>
+//                   <td className="px-6 py-4 text-neutral-600">
+//                     {farmer.location || "N/A"}
+//                   </td>
+//                   <td className="px-6 py-4 text-neutral-600">
+//                     {farmer.total_deliveries || 0}
+//                   </td>
+//                   <td className="px-6 py-4">
+//                     <span
+//                       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+//                         farmer.is_active
+//                           ? "bg-emerald-100 text-emerald-700"
+//                           : "bg-neutral-100 text-neutral-700"
+//                       }`}
+//                     >
+//                       {farmer.is_active ? (
+//                         <CheckCircle size={12} />
+//                       ) : (
+//                         <Clock size={12} />
+//                       )}
+//                       {farmer.is_active ? "Active" : "Inactive"}
+//                     </span>
+//                   </td>
+//                   <td className="px-6 py-4">
+//                     <div className="flex items-center gap-2">
+//                       <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors">
+//                         <Edit size={16} className="text-blue-600" />
+//                       </button>
+//                       <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+//                         <Trash2 size={16} className="text-red-600" />
+//                       </button>
+//                     </div>
+//                   </td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+
+//       {/* Pagination */}
+//       {data?.total > 20 && (
+//         <div className="flex items-center justify-center gap-2">
+//           <button
+//             onClick={() => setPage((p) => Math.max(1, p - 1))}
+//             disabled={page === 1}
+//             className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//           >
+//             Previous
+//           </button>
+//           <span className="px-4 py-2">
+//             Page {page} of {Math.ceil(data.total / 20)}
+//           </span>
+//           <button
+//             onClick={() => setPage((p) => p + 1)}
+//             disabled={page >= Math.ceil(data.total / 20)}
+//             className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//           >
+//             Next
+//           </button>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 function Farmers() {
   const [page, setPage] = useState(1);
-  const { data, loading, error, refetch } = useAPI(
+  const { data, loading, error, execute } = useAPI(
     () => clerkAPI.getFarmers(page, 20),
     [page]
   );
 
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editFarmer, setEditFarmer] = useState(null);
+
+  // Delete states
+  const [deleteFarmer, setDeleteFarmer] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error} onRetry={refetch} />;
+  if (error) return <ErrorMessage message={error} onRetry={execute} />;
+
+  const handleSuccess = async () => {
+    setIsModalOpen(false);
+    setEditFarmer(null);
+    await execute(); // refresh farmers list
+  };
+
+  const handleDelete = async () => {
+    if (!deleteFarmer) return;
+    try {
+      setDeleting(true);
+      setDeleteError("");
+
+      await fetch(`/api/clerk/farmers/${deleteFarmer.id}`, {
+        method: "DELETE",
+      }).then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to delete farmer");
+        }
+      });
+
+      setDeleteFarmer(null);
+      await execute();
+    } catch (err) {
+      setDeleteError(err.message || "Failed to delete farmer");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-bold text-neutral-800">
@@ -420,12 +586,18 @@ function Farmers() {
           </h3>
           <p className="text-neutral-500">Total: {data?.total || 0} farmers</p>
         </div>
-        <button className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
-          <Plus size={18} />
-          Add Farmer
+        <button
+          onClick={() => {
+            setEditFarmer(null);
+            setIsModalOpen(true);
+          }}
+          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+        >
+          <Plus size={18} /> Add Farmer
         </button>
       </div>
 
+      {/* Farmers Table */}
       <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -485,10 +657,21 @@ function Farmers() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => {
+                          setEditFarmer(farmer);
+                          setIsModalOpen(true);
+                        }}
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
                         <Edit size={16} className="text-blue-600" />
                       </button>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => setDeleteFarmer(farmer)}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                      >
                         <Trash2 size={16} className="text-red-600" />
                       </button>
                     </div>
@@ -522,6 +705,50 @@ function Farmers() {
           </button>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteFarmer && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold text-neutral-800 mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-neutral-600 mb-4">
+              Are you sure you want to delete{" "}
+              <strong>{deleteFarmer.full_name}</strong>?
+            </p>
+            {deleteError && (
+              <p className="text-red-500 text-sm mb-2">{deleteError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteFarmer(null)}
+                className="flex-1 px-4 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg"
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Farmer Modal */}
+      <UserModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditFarmer(null);
+        }}
+        onSuccess={handleSuccess}
+        editFarmer={editFarmer}
+      />
     </div>
   );
 }
@@ -530,12 +757,53 @@ function Farmers() {
 // These follow the same pattern - I'll create shortened versions
 
 function Products() {
-  const { data, loading, error } = useAPI(() => clerkAPI.getProducts());
+  const { data, loading, error, execute } = useAPI(() =>
+    clerkAPI.getProducts()
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
+  const [deleteProduct, setDeleteProduct] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
+  const handleSuccess = async () => {
+    setIsModalOpen(false);
+    setEditProduct(null);
+    await execute(); // refresh product list immediately
+  };
+
+  const handleDelete = async () => {
+    if (!deleteProduct) return;
+
+    try {
+      setDeleting(true);
+      setDeleteError("");
+
+      await fetch(`/api/clerk/products/${deleteProduct.id}`, {
+        method: "DELETE",
+      }).then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to delete product");
+        }
+      });
+
+      // Reset delete state and refresh list
+      setDeleteProduct(null);
+      await execute();
+    } catch (err) {
+      setDeleteError(err.message || "Failed to delete product");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-bold text-neutral-800">
@@ -543,12 +811,18 @@ function Products() {
           </h3>
           <p className="text-neutral-500">Total: {data?.total || 0} products</p>
         </div>
-        <button className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
-          <Plus size={18} />
-          Add Product
+        <button
+          onClick={() => {
+            setEditProduct(null);
+            setIsModalOpen(true);
+          }}
+          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+        >
+          <Plus size={18} /> Add Product
         </button>
       </div>
 
+      {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {data?.products?.map((product, i) => (
           <div
@@ -582,11 +856,24 @@ function Products() {
               <p className="text-sm text-neutral-500 mb-4">
                 Farmer: {product.farmer_name}
               </p>
+
               <div className="flex gap-2">
-                <button className="flex-1 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors">
+                {/* Edit Button */}
+                <button
+                  onClick={() => {
+                    setEditProduct(product);
+                    setIsModalOpen(true);
+                  }}
+                  className="flex-1 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors"
+                >
                   Edit
                 </button>
-                <button className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+
+                {/* Delete Button */}
+                <button
+                  onClick={() => setDeleteProduct(product)}
+                  className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                >
                   <Trash2 size={18} />
                 </button>
               </div>
@@ -594,6 +881,50 @@ function Products() {
           </div>
         ))}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteProduct && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold text-neutral-800 mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-neutral-600 mb-4">
+              Are you sure you want to delete{" "}
+              <strong>{deleteProduct.produce_name}</strong>?
+            </p>
+            {deleteError && (
+              <p className="text-red-500 text-sm mb-2">{deleteError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteProduct(null)}
+                className="flex-1 px-4 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg"
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Modal */}
+      <ProductModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditProduct(null);
+        }}
+        onSuccess={handleSuccess}
+        editProduct={editProduct}
+      />
     </div>
   );
 }

@@ -114,8 +114,69 @@ exports.getRecentActivity = async (req, res) => {
   }
 };
 
+// /**
+//  * Get All Farmers for the Hub
+//  */
+// exports.getFarmers = async (req, res) => {
+//   try {
+//     const clerkId = req.user.id;
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 20;
+//     const offset = (page - 1) * limit;
+
+//     const hubResult = await db.query(
+//       "SELECT id FROM hubs WHERE manager_id = $1",
+//       [clerkId]
+//     );
+
+//     if (hubResult.rows.length === 0) {
+//       return res.status(404).json({ error: "Hub not found" });
+//     }
+
+//     const hubId = hubResult.rows[0].id;
+
+//     // Get farmers who have delivered to this hub
+//     const farmers = await db.query(
+//       `SELECT DISTINCT
+//         u.id,
+//         u.full_name,
+//         u.phone,
+//         u.email,
+//         u.metadata->>'location' as location,
+//         u.is_active,
+//         u.created_at as joined,
+//         COUNT(l.id) as total_deliveries,
+//         COALESCE(SUM(l.quantity), 0) as total_quantity
+//        FROM users u
+//        JOIN lots l ON u.id = l.farmer_id
+//        WHERE u.role = 'FARMER'
+//        AND l.hub_id = $1
+//        GROUP BY u.id
+//        ORDER BY u.created_at DESC
+//        LIMIT $2 OFFSET $3`,
+//       [hubId, limit, offset]
+//     );
+
+//     // Get total count
+//     const countResult = await db.query(
+//       `SELECT COUNT(DISTINCT farmer_id) as total
+//        FROM lots WHERE hub_id = $1`,
+//       [hubId]
+//     );
+
+//     res.json({
+//       farmers: farmers.rows,
+//       total: parseInt(countResult.rows[0].total),
+//       page,
+//       limit,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching farmers:", error);
+//     res.status(500).json({ error: "Failed to fetch farmers" });
+//   }
+// };
 /**
- * Get All Farmers for the Hub
+ * Get All Farmers for the Hub (including those with 0 deliveries)
  */
 exports.getFarmers = async (req, res) => {
   try {
@@ -124,6 +185,7 @@ exports.getFarmers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
 
+    // find hub managed by this clerk
     const hubResult = await db.query(
       "SELECT id FROM hubs WHERE manager_id = $1",
       [clerkId]
@@ -135,33 +197,34 @@ exports.getFarmers = async (req, res) => {
 
     const hubId = hubResult.rows[0].id;
 
-    // Get farmers who have delivered to this hub
+    // list all farmers assigned to this hub, deliveries optional
     const farmers = await db.query(
-      `SELECT DISTINCT 
-        u.id, 
-        u.full_name, 
-        u.phone, 
-        u.email,
-        u.metadata->>'location' as location,
-        u.is_active,
-        u.created_at as joined,
-        COUNT(l.id) as total_deliveries,
-        COALESCE(SUM(l.quantity), 0) as total_quantity
+      `SELECT
+         u.id,
+         u.full_name,
+         u.phone,
+         u.email,
+         u.metadata->>'location' as location,
+         u.is_active,
+         u.created_at as joined,
+         COUNT(l.id) as total_deliveries,
+         COALESCE(SUM(l.quantity), 0) as total_quantity
        FROM users u
-       JOIN lots l ON u.id = l.farmer_id
-       WHERE u.role = 'FARMER' 
-       AND l.hub_id = $1
+       LEFT JOIN lots l
+         ON u.id = l.farmer_id
+        AND l.hub_id = $1
+       WHERE u.role = 'FARMER'
        GROUP BY u.id
        ORDER BY u.created_at DESC
        LIMIT $2 OFFSET $3`,
       [hubId, limit, offset]
     );
 
-    // Get total count
+    // get total count of farmers for this hub
     const countResult = await db.query(
-      `SELECT COUNT(DISTINCT farmer_id) as total
-       FROM lots WHERE hub_id = $1`,
-      [hubId]
+      `SELECT COUNT(*) as total
+       FROM users u
+       WHERE u.role = 'FARMER'`
     );
 
     res.json({
@@ -175,6 +238,72 @@ exports.getFarmers = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch farmers" });
   }
 };
+//**
+//  * Get All Farmers for the Hub (including those with 0 deliveries, but only if assigned to this hub)
+//  */
+// exports.getFarmers = async (req, res) => {
+//   try {
+//     const clerkId = req.user.id;
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 20;
+//     const offset = (page - 1) * limit;
+
+//     // find hub managed by this clerk
+//     const hubResult = await db.query(
+//       "SELECT id FROM hubs WHERE manager_id = $1",
+//       [clerkId]
+//     );
+
+//     if (hubResult.rows.length === 0) {
+//       return res.status(404).json({ error: "Hub not found" });
+//     }
+
+//     const hubId = hubResult.rows[0].id;
+
+//     // list all farmers assigned to this hub (via metadata->>'hub_id')
+//     const farmers = await db.query(
+//       `SELECT
+//          u.id,
+//          u.full_name,
+//          u.phone,
+//          u.email,
+//          u.metadata->>'location' as location,
+//          u.is_active,
+//          u.created_at as joined,
+//          COUNT(l.id) as total_deliveries,
+//          COALESCE(SUM(l.quantity), 0) as total_quantity
+//        FROM users u
+//        LEFT JOIN lots l
+//          ON u.id = l.farmer_id
+//         AND l.hub_id = $1
+//        WHERE u.role = 'FARMER'
+//          AND u.metadata->>'hub_id' = $1
+//        GROUP BY u.id
+//        ORDER BY u.created_at DESC
+//        LIMIT $2 OFFSET $3`,
+//       [hubId, limit, offset]
+//     );
+
+//     // count only farmers belonging to this hub
+//     const countResult = await db.query(
+//       `SELECT COUNT(*) as total
+//        FROM users u
+//        WHERE u.role = 'FARMER'
+//          AND u.metadata->>'hub_id' = $1`,
+//       [hubId]
+//     );
+
+//     res.json({
+//       farmers: farmers.rows,
+//       total: parseInt(countResult.rows[0].total),
+//       page,
+//       limit,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching farmers:", error);
+//     res.status(500).json({ error: "Failed to fetch farmers" });
+//   }
+// };
 
 /**
  * Get Farmer Details
@@ -468,7 +597,7 @@ exports.deleteProduct = async (req, res) => {
       hubId,
     ]);
 
-    res.json({ message: "Product deleted successfully" });
+    res.json({ message: "Product deleted successfully" }); // <-- send JSON
   } catch (error) {
     console.error("Error deleting product:", error);
     res.status(500).json({ error: "Failed to delete product" });

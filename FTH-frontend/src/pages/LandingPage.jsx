@@ -114,10 +114,10 @@ export default function LandingPage() {
                 <Link to={"buyer"}>For Buyers</Link>
               </a>
               <a
-                href="/clerk"
+                href="login"
                 className="text-neutral-600 hover:text-emerald-600 transition-colors font-medium"
               >
-                <Link to={"clerk"}> Hub Portal</Link>
+                Hub Portal
               </a>
               <button className="bg-emerald-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg ">
                 <Link className="hover:cursor-pointer" to={"login"}>
@@ -168,7 +168,7 @@ export default function LandingPage() {
               />
             </button>
             <button className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition-all hover:scale-105 shadow-xl">
-              <Link to={"clerk"}>Join as Hub Manager</Link>
+              <Link to={"login"}>Join as Hub Manager</Link>
             </button>
           </div>
 

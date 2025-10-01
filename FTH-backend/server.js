@@ -9,6 +9,7 @@ const rateLimit = require("express-rate-limit");
 // Import routes
 const authRoutes = require("./src/routes/authRoutes");
 const clerkRoutes = require("./src/routes/clerkRoutes");
+const buyerRoutes = require("./src/routes/buyerRoutes");
 
 // Import middleware
 const { notFound, errorHandler } = require("./src/middleware/errorHandler");
@@ -69,6 +70,7 @@ app.get("/health", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/clerk", clerkRoutes);
+app.use("/api/buyer", buyerRoutes);
 
 // Welcome route
 app.get("/", (req, res) => {
@@ -78,6 +80,7 @@ app.get("/", (req, res) => {
     endpoints: {
       auth: "/api/auth",
       clerk: "/api/clerk",
+      buyer: "/api/buyer",
       health: "/health",
     },
   });

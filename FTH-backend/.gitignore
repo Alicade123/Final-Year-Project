@@ -3,7 +3,8 @@ node_modules/
 
 # Environment variables
 .env
-
+BUYER.md
+queriesStorage.sql
 # Logs
 logs/
 *.log
