@@ -102,10 +102,10 @@ export default function LandingPage() {
             </div>
             <div className="hidden md:flex items-center gap-6">
               <a
-                href="#farmers"
+                href="login"
                 className="text-neutral-600 hover:text-emerald-600 transition-colors font-medium"
               >
-                <Link to={"farmer"}>For Farmers</Link>
+                For Farmers
               </a>
               <a
                 href="#buyers"

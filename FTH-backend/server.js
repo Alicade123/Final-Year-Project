@@ -10,6 +10,7 @@ const rateLimit = require("express-rate-limit");
 const authRoutes = require("./src/routes/authRoutes");
 const clerkRoutes = require("./src/routes/clerkRoutes");
 const buyerRoutes = require("./src/routes/buyerRoutes");
+const farmerRoutes = require("./src/routes/farmerRoutes");
 
 // Import middleware
 const { notFound, errorHandler } = require("./src/middleware/errorHandler");
@@ -23,20 +24,20 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+// CORS configuration
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   })
+// );
+app.use(cors());
 
 // Body parser
 app.use(express.json({ limit: "10mb" }));
@@ -71,6 +72,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/clerk", clerkRoutes);
 app.use("/api/buyer", buyerRoutes);
+app.use("/api/farmer", farmerRoutes);
 
 // Welcome route
 app.get("/", (req, res) => {
