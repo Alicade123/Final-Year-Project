@@ -26,7 +26,7 @@ import {
 import { clerkAPI } from "../services/api";
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import { ProductModal } from "../components/ProductModel";
-import { UserModal } from "../components/FarmerModel";
+import UserModal from "../components/UserModel";
 const menuItems = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "farmers", label: "Farmers", icon: Users },
@@ -274,7 +274,7 @@ function Overview() {
 
   const statsData = [
     {
-      label: "Total Farmers",
+      label: "Total Farmers Delivies",
       value: stats?.farmers || 0,
       change: "+12%",
       icon: Users,
@@ -549,7 +549,6 @@ function Farmers() {
   const handleSuccess = async () => {
     setIsModalOpen(false);
     setEditFarmer(null);
-    await execute(); // refresh farmers list
   };
 
   const handleDelete = async () => {
@@ -772,7 +771,6 @@ function Products() {
   const handleSuccess = async () => {
     setIsModalOpen(false);
     setEditProduct(null);
-    await execute(); // refresh product list immediately
   };
 
   const handleDelete = async () => {

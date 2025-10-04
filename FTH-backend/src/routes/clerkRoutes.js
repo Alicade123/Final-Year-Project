@@ -15,6 +15,9 @@ router.get("/dashboard/activity", clerkController.getRecentActivity);
 // Farmers Management
 router.get("/farmers", clerkController.getFarmers);
 router.get("/farmers/:farmerId", clerkController.getFarmerDetails);
+router.post("/farmers", clerkController.addFarmer);
+router.put("/farmers/:farmerId", clerkController.updateFarmer);
+router.delete("/farmers/:farmerId", clerkController.deleteFarmer);
 
 // Products/Lots Management
 router.get("/products", clerkController.getProducts);

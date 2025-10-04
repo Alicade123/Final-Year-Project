@@ -1,42 +1,60 @@
+// src/components/FarmerModal.jsx
 import React, { useState, useEffect } from "react";
-import { X, Plus, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  X,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Lock,
+} from "lucide-react";
 import { clerkAPI } from "../services/api";
 import { useAPICall } from "../hooks/useAPI";
 
-export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
-  const { execute, loading, error } = useAPICall();
-  const [success, setSuccess] = useState(false);
-
+export default function UserModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  editFarmer = null,
+}) {
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
     email: "",
     password: "",
-    role: "FARMER",
-    farmSize: "",
     location: "",
-    hubId: "",
     isActive: true,
   });
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
   // Populate form if editing
   useEffect(() => {
-    if (editUser) {
+    if (editFarmer) {
       setFormData({
-        fullName: editUser.full_name || "",
-        phone: editUser.phone || "",
-        email: editUser.email || "",
-        password: "", // don’t prefill password
-        role: editUser.role || "FARMER",
-        farmSize: editUser.metadata?.farm_size || "",
-        location: editUser.metadata?.location || "",
-        hubId: editUser.metadata?.hub_id || "",
-        isActive: editUser.is_active ?? true,
+        fullName: editFarmer.full_name || "",
+        phone: editFarmer.phone || "",
+        email: editFarmer.email || "",
+        password: "", // Don't populate password for security
+        location: editFarmer.metadata?.location || "",
+        isActive: editFarmer.is_active ?? true,
+      });
+    } else {
+      setFormData({
+        fullName: "",
+        phone: "",
+        email: "",
+        password: "",
+        location: "",
+        isActive: true,
       });
     }
-  }, [editUser]);
+  }, [editFarmer]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -45,6 +63,7 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
       [name]: type === "checkbox" ? checked : value,
     }));
 
+    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const newErrors = { ...prev };
@@ -56,38 +75,58 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.fullName.trim()) errors.fullName = "Full name is required";
-    if (!formData.phone.trim()) errors.phone = "Phone is required";
-    if (!editUser && !formData.password.trim())
-      errors.password = "Password is required";
-    if (!formData.role) errors.role = "Role is required";
+
+    if (!formData.fullName || formData.fullName.trim().length === 0) {
+      errors.fullName = "Full name is required";
+    }
+
+    if (!formData.phone || formData.phone.trim().length === 0) {
+      errors.phone = "Phone number is required";
+    } else if (!/^\+?[\d\s-]{10,}$/.test(formData.phone)) {
+      errors.phone = "Please enter a valid phone number";
+    }
+
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Password required only when adding new farmer
+    if (!editFarmer && (!formData.password || formData.password.length < 6)) {
+      errors.password = "Password must be at least 6 characters";
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
-      const payload = {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email || null,
-        password: formData.password || undefined,
-        role: formData.role,
-        metadata: {
-          farm_size: formData.farmSize,
-          location: formData.location,
-          hub_id: formData.hubId,
-        },
-        isActive: formData.isActive,
-      };
+      setLoading(true);
+      setError("");
 
-      if (editUser) {
-        await execute(clerkAPI.updateUser, editUser.id, payload);
+      if (editFarmer) {
+        // Update farmer
+        await clerkAPI.updateFarmer(editFarmer.id, {
+          fullName: formData.fullName,
+          email: formData.email || null,
+          location: formData.location,
+          isActive: formData.isActive,
+        });
       } else {
-        await execute(clerkAPI.registerUser, payload);
+        // Add new farmer
+        await clerkAPI.addFarmer({
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email || null,
+          password: formData.password,
+          location: formData.location,
+        });
       }
 
       setSuccess(true);
@@ -96,7 +135,10 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
         if (onSuccess) onSuccess();
       }, 1500);
     } catch (err) {
-      console.error("Failed to save user:", err);
+      setError(err || "Failed to save farmer");
+      console.error("Error saving farmer:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,13 +148,11 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
       phone: "",
       email: "",
       password: "",
-      role: "FARMER",
-      farmSize: "",
       location: "",
-      hubId: "",
       isActive: true,
     });
     setValidationErrors({});
+    setError("");
     setSuccess(false);
     onClose();
   };
@@ -125,7 +165,7 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">
-            {editUser ? "Edit User" : "Register New User"}
+            {editFarmer ? "Edit Farmer" : "Add New Farmer"}
           </h2>
           <button
             onClick={handleClose}
@@ -144,16 +184,17 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                 size={64}
               />
               <h3 className="text-2xl font-bold text-neutral-800 mb-2">
-                {editUser ? "User Updated!" : "User Registered!"}
+                {editFarmer ? "Farmer Updated!" : "Farmer Added!"}
               </h3>
               <p className="text-neutral-600">
-                {editUser
-                  ? "The user account has been updated successfully."
-                  : "The new user has been created successfully."}
+                {editFarmer
+                  ? "The farmer information has been updated successfully."
+                  : "The farmer has been registered successfully."}
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Error Banner */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                   <AlertCircle
@@ -171,6 +212,7 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                 {/* Full Name */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                    <User className="inline mr-2" size={16} />
                     Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -178,7 +220,8 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-xl ${
+                    placeholder="e.g., John Doe"
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
                       validationErrors.fullName
                         ? "border-red-500"
                         : "border-neutral-300"
@@ -194,14 +237,19 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                 {/* Phone */}
                 <div>
                   <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                    Phone <span className="text-red-500">*</span>
+                    <Phone className="inline mr-2" size={16} />
+                    Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="text"
+                    type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-xl ${
+                    disabled={editFarmer !== null}
+                    placeholder="+250 788 123 456"
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
+                      editFarmer ? "bg-neutral-100 cursor-not-allowed" : ""
+                    } ${
                       validationErrors.phone
                         ? "border-red-500"
                         : "border-neutral-300"
@@ -212,26 +260,43 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                       {validationErrors.phone}
                     </p>
                   )}
+                  {editFarmer && (
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Phone number cannot be changed
+                    </p>
+                  )}
                 </div>
 
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                    Email
+                    <Mail className="inline mr-2" size={16} />
+                    Email (Optional)
                   </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-xl"
+                    placeholder="farmer@example.com"
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
+                      validationErrors.email
+                        ? "border-red-500"
+                        : "border-neutral-300"
+                    }`}
                   />
+                  {validationErrors.email && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {validationErrors.email}
+                    </p>
+                  )}
                 </div>
 
-                {/* Password */}
-                {!editUser && (
-                  <div>
+                {/* Password - Only show when adding new farmer */}
+                {!editFarmer && (
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                      <Lock className="inline mr-2" size={16} />
                       Password <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -239,7 +304,8 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-xl ${
+                      placeholder="At least 6 characters"
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
                         validationErrors.password
                           ? "border-red-500"
                           : "border-neutral-300"
@@ -253,79 +319,44 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                   </div>
                 )}
 
-                {/* Role */}
-                <div>
-                  <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                    Role <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-xl"
-                  >
-                    <option value="FARMER">Farmer</option>
-                    <option value="CLERK">Clerk/Hub Manager</option>
-                    <option value="BUYER">Buyer</option>
-                  </select>
-                </div>
-
-                {/* Farm Size */}
-                <div>
-                  <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                    Farm Size
-                  </label>
-                  <input
-                    type="text"
-                    name="farmSize"
-                    value={formData.farmSize}
-                    onChange={handleChange}
-                    placeholder="e.g., 12 hectares"
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-xl"
-                  />
-                </div>
-
                 {/* Location */}
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                    Location
+                    <MapPin className="inline mr-2" size={16} />
+                    Location (Optional)
                   </label>
                   <input
                     type="text"
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
-                    placeholder="e.g., Ruhango"
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-xl"
+                    placeholder="e.g., Ruhango District"
+                    className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                   />
                 </div>
 
-                {/* Hub ID */}
-                <div>
-                  <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                    Hub ID
-                  </label>
-                  <input
-                    type="text"
-                    name="hubId"
-                    value={formData.hubId}
-                    onChange={handleChange}
-                    placeholder="UUID of hub"
-                    className="w-full px-4 py-3 border border-neutral-300 rounded-xl"
-                  />
-                </div>
-
-                {/* Active */}
-                <div className="flex items-center gap-2 md:col-span-2">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-emerald-600 rounded border-neutral-300"
-                  />
-                  <span className="text-neutral-700">Active</span>
-                </div>
+                {/* Active Status - Only show when editing */}
+                {editFarmer && (
+                  <div className="md:col-span-2">
+                    <label className="flex items-center gap-3 p-4 border border-neutral-300 rounded-xl cursor-pointer hover:bg-neutral-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        checked={formData.isActive}
+                        onChange={handleChange}
+                        className="w-5 h-5 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <div className="flex-1">
+                        <span className="font-semibold text-neutral-800">
+                          Active Status
+                        </span>
+                        <p className="text-sm text-neutral-600">
+                          Farmer can deliver and receive payments
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -341,17 +372,17 @@ export function UserModal({ isOpen, onClose, onSuccess, editUser = null }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="animate-spin" size={20} />
-                      {editUser ? "Updating..." : "Registering..."}
+                      {editFarmer ? "Updating..." : "Adding..."}
                     </>
                   ) : (
                     <>
-                      <Plus size={20} />
-                      {editUser ? "Update User" : "Register User"}
+                      <CheckCircle size={20} />
+                      {editFarmer ? "Update Farmer" : "Add Farmer"}
                     </>
                   )}
                 </button>

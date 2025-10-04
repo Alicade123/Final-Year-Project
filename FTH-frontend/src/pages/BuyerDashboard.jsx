@@ -862,127 +862,46 @@ function CartModal({
     </div>
   );
 }
-
-// // Orders Component
-// function Orders() {
-//   const [statusFilter, setStatusFilter] = useState("");
-//   const { data, loading, error } = useAPI(
-//     () => buyerAPI.getMyOrders(statusFilter),
-//     [statusFilter]
-//   );
-
-//   if (loading) return <LoadingSpinner />;
-//   if (error) return <ErrorMessage message={error} />;
-
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div>
-//           <h3 className="text-2xl font-bold text-neutral-800">My Orders</h3>
-//           <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
-//         </div>
-//         <select
-//           value={statusFilter}
-//           onChange={(e) => setStatusFilter(e.target.value)}
-//           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-//         >
-//           <option value="">All Orders</option>
-//           <option value="PENDING">Pending</option>
-//           <option value="PAID">Paid</option>
-//           <option value="FULFILLED">Fulfilled</option>
-//           <option value="CANCELLED">Cancelled</option>
-//         </select>
-//       </div>
-
-//       <div className="space-y-4">
-//         {data?.orders?.map((order, i) => (
-//           <div
-//             key={i}
-//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow"
-//           >
-//             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-//               <div className="flex-1">
-//                 <div className="flex items-center gap-3 mb-2">
-//                   <span className="font-bold text-lg text-neutral-800">
-//                     #{order.id.substring(0, 8)}
-//                   </span>
-//                   <span
-//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
-//                       order.status === "FULFILLED"
-//                         ? "bg-emerald-100 text-emerald-700"
-//                         : order.status === "PENDING"
-//                         ? "bg-amber-100 text-amber-700"
-//                         : order.status === "PAID"
-//                         ? "bg-green-100 text-green-700"
-//                         : "bg-red-100 text-red-700"
-//                     }`}
-//                   >
-//                     {order.status}
-//                   </span>
-//                 </div>
-//                 <p className="text-neutral-600 mb-1">
-//                   {order.hub_name} • {order.items?.length || 0} items
-//                 </p>
-//                 <p className="text-sm text-neutral-500">
-//                   {new Date(order.created_at).toLocaleDateString()}
-//                 </p>
-//               </div>
-//               <div className="flex items-center gap-4">
-//                 <div className="text-right">
-//                   <p className="text-sm text-neutral-500">Total</p>
-//                   <p className="text-2xl font-bold text-green-600">
-//                     ${order.total_amount}
-//                   </p>
-//                 </div>
-//                 <button className="bg-green-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors">
-//                   View Details
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
 function Orders() {
   const [statusFilter, setStatusFilter] = useState("");
-  const [mode, setMode] = useState("LIST"); // LIST | DETAILS | CANCEL | PAYMENT
+  const [mode, setMode] = useState("LIST"); // LIST | DETAILS
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY");
+  const [loading, setLoading] = useState(false);
 
-  const { data, loading, error, refetch } = useAPI(
-    () => buyerAPI.getMyOrders(statusFilter),
-    [statusFilter]
-  );
+  const {
+    data,
+    loading: loadingOrders,
+    error,
+    refetch,
+  } = useAPI(() => buyerAPI.getMyOrders(statusFilter), [statusFilter]);
 
   const handleViewDetails = async (order) => {
     const details = await buyerAPI.getOrderDetails(order.id);
     setSelectedOrder(details);
     setMode("DETAILS");
+    setShowPayment(false);
   };
 
-  const handleCancelOrder = async (orderId) => {
+  const handlePayment = async () => {
     try {
-      await buyerAPI.cancelOrder(orderId);
+      setLoading(true);
+      await buyerAPI.initiatePayment(selectedOrder.id, {
+        method: paymentMethod,
+        providerRef: "TXN-" + Date.now(), // generate dummy ref for now
+      });
+      alert("✅ Payment initiated successfully!");
       await refetch();
       setMode("LIST");
     } catch (err) {
       alert(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handlePayment = async (orderId, method) => {
-    try {
-      await buyerAPI.initiatePayment(orderId, { method });
-      await refetch();
-      setMode("LIST");
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  // ---- Render Modes ----
-  if (loading) return <LoadingSpinner />;
+  if (loadingOrders) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
   if (mode === "DETAILS" && selectedOrder) {
@@ -1012,28 +931,69 @@ function Orders() {
           <span>${selectedOrder.total_amount}</span>
         </div>
 
-        <div className="flex gap-4">
+        {/* Actions */}
+        <div className="space-y-4">
           {selectedOrder.status === "PENDING" && (
             <>
-              <button
-                onClick={() => handleCancelOrder(selectedOrder.id)}
-                className="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700"
-              >
-                Cancel Order
-              </button>
-              <button
-                onClick={() => handlePayment(selectedOrder.id, "MOBILE_MONEY")}
-                className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
-              >
-                Pay Now
-              </button>
+              {!showPayment ? (
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => handleViewDetails(null)}
+                    className="px-4 py-2 border rounded-xl"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setShowPayment(true)}
+                    className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
+                  >
+                    Pay Now
+                  </button>
+                </div>
+              ) : (
+                <div className="border-t pt-4 space-y-4">
+                  <label className="block">
+                    <span className="text-sm text-gray-600">
+                      Select Payment Method
+                    </span>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mt-1 border px-3 py-2 rounded-lg w-full"
+                    >
+                      <option value="MOBILE_MONEY">Mobile Money</option>
+                      <option value="BANK_TRANSFER">Bank Transfer</option>
+                      <option value="CASH">Cash</option>
+                      <option value="ONLINE">Online Payment</option>
+                    </select>
+                  </label>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setShowPayment(false)}
+                      className="px-4 py-2 border rounded-xl"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      disabled={loading}
+                      onClick={handlePayment}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+                    >
+                      {loading ? "Processing..." : "Confirm Payment"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
+
+          {/* Back button always available */}
           <button
             onClick={() => setMode("LIST")}
-            className="px-4 py-2 border rounded-xl"
+            className="px-4 py-2 border rounded-xl w-full"
           >
-            Back
+            Back to Orders
           </button>
         </div>
       </div>

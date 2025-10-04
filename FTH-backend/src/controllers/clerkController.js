@@ -175,69 +175,7 @@ exports.getRecentActivity = async (req, res) => {
 //     res.status(500).json({ error: "Failed to fetch farmers" });
 //   }
 // };
-/**
- * Get All Farmers for the Hub (including those with 0 deliveries)
- */
-exports.getFarmers = async (req, res) => {
-  try {
-    const clerkId = req.user.id;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = (page - 1) * limit;
 
-    // find hub managed by this clerk
-    const hubResult = await db.query(
-      "SELECT id FROM hubs WHERE manager_id = $1",
-      [clerkId]
-    );
-
-    if (hubResult.rows.length === 0) {
-      return res.status(404).json({ error: "Hub not found" });
-    }
-
-    const hubId = hubResult.rows[0].id;
-
-    // list all farmers assigned to this hub, deliveries optional
-    const farmers = await db.query(
-      `SELECT
-         u.id,
-         u.full_name,
-         u.phone,
-         u.email,
-         u.metadata->>'location' as location,
-         u.is_active,
-         u.created_at as joined,
-         COUNT(l.id) as total_deliveries,
-         COALESCE(SUM(l.quantity), 0) as total_quantity
-       FROM users u
-       LEFT JOIN lots l
-         ON u.id = l.farmer_id
-        AND l.hub_id = $1
-       WHERE u.role = 'FARMER'
-       GROUP BY u.id
-       ORDER BY u.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [hubId, limit, offset]
-    );
-
-    // get total count of farmers for this hub
-    const countResult = await db.query(
-      `SELECT COUNT(*) as total
-       FROM users u
-       WHERE u.role = 'FARMER'`
-    );
-
-    res.json({
-      farmers: farmers.rows,
-      total: parseInt(countResult.rows[0].total),
-      page,
-      limit,
-    });
-  } catch (error) {
-    console.error("Error fetching farmers:", error);
-    res.status(500).json({ error: "Failed to fetch farmers" });
-  }
-};
 //**
 //  * Get All Farmers for the Hub (including those with 0 deliveries, but only if assigned to this hub)
 //  */
@@ -306,6 +244,70 @@ exports.getFarmers = async (req, res) => {
 // };
 
 /**
+ * Get All Farmers for the Hub (including those with 0 deliveries)
+ */
+exports.getFarmers = async (req, res) => {
+  try {
+    const clerkId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // find hub managed by this clerk
+    const hubResult = await db.query(
+      "SELECT id FROM hubs WHERE manager_id = $1",
+      [clerkId]
+    );
+
+    if (hubResult.rows.length === 0) {
+      return res.status(404).json({ error: "Hub not found" });
+    }
+
+    const hubId = hubResult.rows[0].id;
+
+    // list all farmers assigned to this hub, deliveries optional
+    const farmers = await db.query(
+      `SELECT
+         u.id,
+         u.full_name,
+         u.phone,
+         u.email,
+         u.metadata->>'location' as location,
+         u.is_active,
+         u.created_at as joined,
+         COUNT(l.id) as total_deliveries,
+         COALESCE(SUM(l.quantity), 0) as total_quantity
+       FROM users u
+       LEFT JOIN lots l
+         ON u.id = l.farmer_id
+        AND l.hub_id = $1
+       WHERE u.role = 'FARMER'
+       GROUP BY u.id
+       ORDER BY u.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [hubId, limit, offset]
+    );
+
+    // get total count of farmers for this hub
+    const countResult = await db.query(
+      `SELECT COUNT(*) as total
+       FROM users u
+       WHERE u.role = 'FARMER'`
+    );
+
+    res.json({
+      farmers: farmers.rows,
+      total: parseInt(countResult.rows[0].total),
+      page,
+      limit,
+    });
+  } catch (error) {
+    console.error("Error fetching farmers:", error);
+    res.status(500).json({ error: "Failed to fetch farmers" });
+  }
+};
+
+/**
  * Get Farmer Details
  */
 exports.getFarmerDetails = async (req, res) => {
@@ -363,6 +365,165 @@ exports.getFarmerDetails = async (req, res) => {
   } catch (error) {
     console.error("Error fetching farmer details:", error);
     res.status(500).json({ error: "Failed to fetch farmer details" });
+  }
+};
+
+/**
+ * Add New Farmer
+ */
+const bcrypt = require("bcrypt");
+
+exports.addFarmer = async (req, res) => {
+  try {
+    const { fullName, phone, email, password, location } = req.body;
+
+    // Validate required fields
+    if (!fullName || !phone || !password) {
+      return res.status(400).json({
+        error: "Full name, phone, and password are required",
+      });
+    }
+
+    // Check if user already exists
+    let existingUser;
+    if (email) {
+      existingUser = await db.query(
+        "SELECT id FROM users WHERE phone = $1 OR email = $2",
+        [phone, email]
+      );
+    } else {
+      existingUser = await db.query("SELECT id FROM users WHERE phone = $1", [
+        phone,
+      ]);
+    }
+
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({
+        error: "Farmer with this phone or email already exists",
+      });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create metadata with location
+    const metadata = location ? { location } : {};
+
+    // Insert farmer
+    const result = await db.query(
+      `INSERT INTO users (full_name, phone, email, password_hash, role, metadata)
+       VALUES ($1, $2, $3, $4, 'FARMER', $5)
+       RETURNING id, full_name, phone, email, role, metadata, is_active, created_at`,
+      [fullName, phone, email || null, passwordHash, JSON.stringify(metadata)]
+    );
+
+    // Create notification for the farmer
+    await db.query(
+      `INSERT INTO notifications (user_id, type, title, message)
+       VALUES ($1, 'GENERAL', 'Welcome!', 
+       'Your farmer account has been created. You can now start delivering produce.')`,
+      [result.rows[0].id]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding farmer:", error);
+    res.status(500).json({ error: "Failed to add farmer" });
+  }
+};
+
+/*
+Farmer update
+*/
+exports.updateFarmer = async (req, res) => {
+  try {
+    const { farmerId } = req.params;
+    const { fullName, email, location, isActive } = req.body;
+
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (fullName) {
+      updates.push(`full_name = $${paramCount++}`);
+      values.push(fullName);
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${paramCount++}`);
+      values.push(email);
+    }
+    if (location !== undefined) {
+      updates.push(`metadata = metadata || $${paramCount++}::jsonb`);
+      values.push(JSON.stringify({ location }));
+    }
+    if (isActive !== undefined) {
+      updates.push(`is_active = $${paramCount++}`);
+      values.push(isActive);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    values.push(farmerId);
+
+    const result = await db.query(
+      `UPDATE users 
+       SET ${updates.join(", ")}
+       WHERE id = $${paramCount} AND role = 'FARMER'
+       RETURNING id, full_name, phone, email, role, metadata, is_active, created_at`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Farmer not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error updating farmer:", error);
+    res.status(500).json({ error: "Failed to update farmer" });
+  }
+};
+
+/*
+Delete Farmer
+*/
+exports.deleteFarmer = async (req, res) => {
+  try {
+    const { farmerId } = req.params;
+
+    // Check if farmer has any lots
+    const lotsCheck = await db.query(
+      "SELECT COUNT(*) as count FROM lots WHERE farmer_id = $1",
+      [farmerId]
+    );
+
+    if (parseInt(lotsCheck.rows[0].count) > 0) {
+      return res.status(400).json({
+        error:
+          "Cannot delete farmer with existing product deliveries. Please deactivate instead.",
+      });
+    }
+
+    // Soft delete farmer
+    const result = await db.query(
+      "UPDATE users SET is_active = FALSE WHERE id = $1 AND role = 'FARMER' RETURNING *",
+      [farmerId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Farmer not found" });
+    }
+
+    // Return the updated farmer data (optional)
+    res.status(200).json({
+      message: "Farmer deleted successfully",
+      farmer: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error deleting farmer:", error);
+    res.status(500).json({ error: "Failed to delete farmer" });
   }
 };
 

@@ -24,12 +24,12 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { useAPI, useAPICall } from "../hooks/useAPI";
-import farmerAPI from "../services/farmerAPI";
+import { farmerAPI } from "../services/api";
 
 const menuItems = [
   { key: "overview", label: "Dashboard", icon: LayoutDashboard },
   { key: "products", label: "My Products", icon: Package },
-  { key: "deliveries", label: "Deliveries", icon: ShoppingBag },
+  // { key: "deliveries", label: "Deliveries", icon: ShoppingBag },
   { key: "earnings", label: "Earnings", icon: DollarSign },
   { key: "analytics", label: "Analytics", icon: BarChart3 },
   { key: "market", label: "Market Prices", icon: TrendingUp },

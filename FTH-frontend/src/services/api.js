@@ -82,6 +82,13 @@ export const clerkAPI = {
     api.get(`/clerk/farmers?page=${page}&limit=${limit}`),
 
   getFarmerDetails: (farmerId) => api.get(`/clerk/farmers/${farmerId}`),
+  addFarmer: (data) => api.post("/clerk/farmers", data).then((res) => res.data),
+
+  updateFarmer: (farmerId, data) =>
+    api.put(`/clerk/farmers/${farmerId}`, data).then((res) => res.data),
+
+  deleteFarmer: (farmerId) =>
+    api.delete(`/clerk/farmers/${farmerId}`).then((res) => res.data),
 
   // Products
   getProducts: (status = "AVAILABLE", page = 1, limit = 20) =>
@@ -177,7 +184,7 @@ export const buyerAPI = {
 
   cancelOrder: (orderId) => api.post(`/buyer/orders/${orderId}/cancel`),
 
-  // Payment
+  // // Payment
   initiatePayment: (orderId, paymentData) =>
     api.post(`/buyer/orders/${orderId}/payment`, paymentData),
 

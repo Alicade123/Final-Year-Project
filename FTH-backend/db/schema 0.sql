@@ -115,3 +115,4 @@ CREATE INDEX idx_lots_hub ON lots(hub_id);
 CREATE INDEX idx_lots_status ON lots(status);
 CREATE INDEX idx_orders_buyer ON orders(buyer_id);
 CREATE INDEX idx_payments_status ON payments(status);
+
