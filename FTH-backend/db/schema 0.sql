@@ -116,3 +116,6 @@ CREATE INDEX idx_lots_status ON lots(status);
 CREATE INDEX idx_orders_buyer ON orders(buyer_id);
 CREATE INDEX idx_payments_status ON payments(status);
 
+-- Extend role_enum with ADMIN
+ALTER TYPE role_enum ADD VALUE IF NOT EXISTS 'ADMIN';
+ALTER TYPE role_enum ADD VALUE IF NOT EXISTS 'HUB_MANAGER';

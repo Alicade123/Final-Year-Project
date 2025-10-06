@@ -30,6 +30,7 @@ import UserModal from "../components/UserModel";
 const menuItems = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "farmers", label: "Farmers", icon: Users },
+  // { key: "buyers", label: "Buyers", icon: Users },
   { key: "products", label: "Products", icon: Package },
   { key: "orders", label: "Orders", icon: ShoppingCart },
   { key: "payouts", label: "Payouts", icon: DollarSign },
@@ -1508,6 +1509,7 @@ function SettingsTab() {
                   setFormData({ ...formData, name: e.target.value })
                 }
                 className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                readOnly
               />
             </div>
             <div>
@@ -1521,16 +1523,17 @@ function SettingsTab() {
                   setFormData({ ...formData, location: e.target.value })
                 }
                 className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                readOnly
               />
             </div>
-            <button
+            {/* <button
               type="submit"
               disabled={updating}
               className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center gap-2"
             >
               {updating && <Loader2 className="animate-spin" size={18} />}
               Save Changes
-            </button>
+            </button> */}
           </form>
         </div>
 

@@ -41,6 +41,8 @@ export default function LoginPage() {
         navigate("/buyer");
       } else if (response.user.role === "FARMER") {
         navigate("/farmer");
+      } else if (response.user.role === "ADMIN") {
+        navigate("/admin");
       } else {
         navigate("/");
       }

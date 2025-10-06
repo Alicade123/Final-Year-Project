@@ -260,4 +260,24 @@ export const farmerAPI = {
   markAllNotificationsRead: () => api.patch("/farmer/notifications/read-all"),
 };
 
+export const adminAPI = {
+  listUsers: (page = 1, limit = 20, role = "", search = "") =>
+    api.get("/admin/users", {
+      params: { page, limit, role, search },
+    }),
+
+  createUser: (data) => api.post("/admin/users", data),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+
+  // hubs
+  listHubs: () => api.get("/admin/hubs"),
+  createHub: (data) => api.post("/admin/hubs", data),
+  updateHub: (id, data) => api.put(`/admin/hubs/${id}`, data),
+  deleteHub: (id) => api.delete(`/admin/hubs/${id}`),
+
+  // clerks
+  getClerks: () => api.get("/admin/clerks"),
+};
+
 export default api;
