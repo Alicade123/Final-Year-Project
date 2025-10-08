@@ -5,7 +5,8 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
-
+const session = require("express-session");
+const passport = require("./src/config/passport");
 // Import routes
 const authRoutes = require("./src/routes/authRoutes");
 const clerkRoutes = require("./src/routes/clerkRoutes");
@@ -25,31 +26,27 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
-// app.use(
-//   cors({
-//     origin: function (origin, callback) {
-//       if (!origin || allowedOrigins.includes(origin)) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     credentials: true,
-//   })
-// );
 app.use(cors());
 
 // Body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-// Logging
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-} else {
-  app.use(morgan("combined"));
-}
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "SECRET_KEY",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Rate limiting
 const limiter = rateLimit({

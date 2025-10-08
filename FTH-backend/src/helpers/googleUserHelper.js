@@ -1,20 +1,35 @@
-const db = require("../config/db");
+// src/helpers/googleUserHelper.js
+const db = require("../config/db"); // your database client
 const { v4: uuidv4 } = require("uuid");
 
 async function findOrCreateUserByGoogle({ googleId, email, name }) {
-  // Check if user exists
+  // Check if user exists by google_id
   const result = await db.query("SELECT * FROM users WHERE google_id = $1", [
     googleId,
   ]);
   if (result.rows.length > 0) return result.rows[0];
 
-  // Create new BUYER
+  // Check if user exists by email (optional: link account)
+  const emailCheck = await db.query("SELECT * FROM users WHERE email = $1", [
+    email,
+  ]);
+  if (emailCheck.rows.length > 0) {
+    // Link Google ID to existing user
+    const user = emailCheck.rows[0];
+    await db.query("UPDATE users SET google_id = $1 WHERE id = $2", [
+      googleId,
+      user.id,
+    ]);
+    return { ...user, google_id: googleId };
+  }
+
+  // If not, create new BUYER user
   const newUser = {
     id: uuidv4(),
     full_name: name || "Google User",
-    phone: null, // optional for Google signup
+    phone: null,
     email: email || null,
-    password_hash: null, // password not required
+    password_hash: null,
     role: "BUYER",
     google_id: googleId,
     is_active: true,

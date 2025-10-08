@@ -86,6 +86,7 @@ export default function AdminUsers() {
           <option value="ADMIN">Admin</option>
           <option value="CLERK">Clerk</option>
           <option value="FARMER">Farmer</option>
+          <option value="BUYER">Buyer</option>
         </select>
       </div>
 

@@ -119,3 +119,7 @@ CREATE INDEX idx_payments_status ON payments(status);
 -- Extend role_enum with ADMIN
 ALTER TYPE role_enum ADD VALUE IF NOT EXISTS 'ADMIN';
 ALTER TYPE role_enum ADD VALUE IF NOT EXISTS 'HUB_MANAGER';
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
+
