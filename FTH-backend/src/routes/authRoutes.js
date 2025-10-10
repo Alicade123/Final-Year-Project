@@ -6,6 +6,7 @@ const passport = require("../config/passport");
 
 // Regular login & register
 router.post("/register", authController.register);
+router.post("/register-farmer", authController.registerFarmer);
 router.post("/login", authController.login);
 
 // Protected routes

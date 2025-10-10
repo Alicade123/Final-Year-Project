@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sprout, Loader2, Eye, EyeOff } from "lucide-react";
+import { Sprout, Loader2, Eye, EyeOff, Info } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
 import { authAPI } from "../services/api";
 
@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showInfoGoogle, setShowInfoGoogle] = useState(false);
+  const [showInfoSignup, setShowInfoSignup] = useState(false);
 
   const redirectByRole = (role) => {
     switch (role) {
@@ -42,11 +44,9 @@ export default function LoginPage() {
 
     try {
       const response = await authAPI.login(formData.phone, formData.password);
-
       localStorage.setItem("authToken", response.token);
       localStorage.setItem("userRole", response.user.role);
       localStorage.setItem("user", JSON.stringify(response.user));
-
       redirectByRole(response.user.role);
     } catch (err) {
       setError(err?.message || "Login failed. Please try again.");
@@ -56,23 +56,24 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    // Redirect user to backend Google OAuth endpoint
     window.location.href = "http://localhost:5000/api/auth/google";
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-emerald-700 to-teal-600 flex items-center justify-center p-4 relative">
       <div className="relative w-full max-w-md">
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-2xl mb-4">
             <Sprout className="text-white" size={40} />
           </div>
-          <h1 className="text-4xl font-extrabold text-white mb-2">
-            Farmers Trade Hub
+          <h1 className="text-3xl font-extrabold text-white mb-2">
+            Trade Hub Portal
           </h1>
-          <p className="text-emerald-100">Sign in to manage your hub</p>
+          {/* <p className="text-emerald-100 text-lg">Sign in to manage your hub</p> */}
         </div>
 
+        {/* Form Container */}
         <div className="bg-white/10 backdrop-blur-lg border-2 border-white/20 rounded-3xl shadow-2xl p-8 space-y-4">
           {error && (
             <div className="bg-red-500/10 border border-red-500/50 text-red-100 px-4 py-3 rounded-xl text-sm">
@@ -80,6 +81,7 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-white font-semibold mb-2">
@@ -120,10 +122,11 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Sign In Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-white py-3 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-white py-3 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -135,10 +138,26 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="relative flex items-center justify-center text-sm text-emerald-100 py-2">
-            <span className="bg-transparent px-2">or continue with</span>
+          {/* Info for Google */}
+          <div
+            className="relative flex items-center justify-center text-sm text-emerald-100 py-2 group"
+            onMouseEnter={() => setShowInfoGoogle(true)}
+            onMouseLeave={() => setShowInfoGoogle(false)}
+          >
+            <span className="bg-transparent px-2 flex items-center gap-2">
+              or continue with{" "}
+              <Info size={16} className="text-amber-300 cursor-pointer" />
+            </span>
+            {showInfoGoogle && (
+              <div className="absolute bottom-10 bg-black/80 text-white text-xs px-3 py-2 rounded-lg w-60 text-center shadow-lg">
+                If you don’t have an account, Google Sign-in will automatically
+                create one for you as a{" "}
+                <span className="font-bold text-amber-300">Buyer</span>.
+              </div>
+            )}
           </div>
 
+          {/* Google Button */}
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -147,13 +166,37 @@ export default function LoginPage() {
             <FaGoogle size={20} /> Sign in with Google
           </button>
 
-          <button
-            type="button"
-            onClick={() => navigate("/register")}
-            className="w-full bg-white/10 border-2 border-white/30 text-white py-3 rounded-xl font-semibold hover:bg-white/20 transition-all mt-3"
+          {/* Farmer Signup Info */}
+          <div
+            className="relative group"
+            onMouseEnter={() => setShowInfoSignup(true)}
+            onMouseLeave={() => setShowInfoSignup(false)}
           >
-            Create Farmer Account
-          </button>
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              className="w-full bg-white/10 border-2 border-white/30 text-white py-3 rounded-xl font-semibold hover:bg-white/20 transition-all mt-3 flex items-center justify-center gap-2"
+            >
+              Signup for Buyer Account{" "}
+              <Info size={16} className="text-amber-300" />
+            </button>
+            {showInfoSignup && (
+              <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-2 rounded-lg w-64 text-center shadow-lg">
+                Only <span className="font-bold text-amber-300">Buyers</span>{" "}
+                can create an account using this signup option.
+              </div>
+            )}
+          </div>
+
+          {/* Landing Page Button */}
+          <div className="text-center mt-4">
+            <a
+              href="/"
+              className="text-blue-900 text-sm font-medium hover:underline"
+            >
+              Back to Landing Page
+            </a>
+          </div>
         </div>
       </div>
     </div>

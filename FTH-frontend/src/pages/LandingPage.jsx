@@ -105,26 +105,26 @@ export default function LandingPage() {
                 href="login"
                 className="text-neutral-600 hover:text-emerald-600 transition-colors font-medium"
               >
-                For Farmers
-              </a>
-              <a
-                href="#buyers"
-                className="text-neutral-600 hover:text-emerald-600 transition-colors font-medium"
-              >
-                <Link to={"buyer"}>For Buyers</Link>
+                Farmers
               </a>
               <a
                 href="login"
                 className="text-neutral-600 hover:text-emerald-600 transition-colors font-medium"
               >
-                Hub Portal
+                Buyers
               </a>
-              <button className="bg-emerald-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg ">
+              <a
+                href="login"
+                className="text-neutral-600 hover:text-emerald-600 transition-colors font-medium"
+              >
+                Hub-Manager
+              </a>
+              {/* <button className="bg-emerald-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg ">
                 <Link className="hover:cursor-pointer" to={"login"}>
                   {" "}
                   Get Started
                 </Link>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
@@ -161,14 +161,16 @@ export default function LandingPage() {
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <button className="group bg-gradient-to-r from-amber-400 to-orange-500 text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center gap-3 shadow-2xl hover:shadow-amber-500/50 transition-all hover:scale-105">
-              Explore Marketplace
+              <Link className="hover:cursor-pointer" to={"login"}>
+                Get startd
+              </Link>
               <ArrowRight
                 size={20}
                 className="group-hover:translate-x-1 transition-transform"
               />
             </button>
             <button className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition-all hover:scale-105 shadow-xl">
-              <Link to={"login"}>Join as Hub Manager</Link>
+              <Link to={"register"}>Join as Customer</Link>
             </button>
           </div>
 
@@ -416,7 +418,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-neutral-900 text-neutral-300 py-16">
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
+        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <Sprout className="text-emerald-500" size={36} />
@@ -551,6 +553,12 @@ export default function LandingPage() {
               </a>
               <a href="#" className="hover:text-emerald-400 transition-colors">
                 Support
+              </a>
+              <a
+                href="/contact"
+                className="hover:text-emerald-400 transition-colors"
+              >
+                Contact us
               </a>
             </div>
           </div>

@@ -123,3 +123,20 @@ ALTER TYPE role_enum ADD VALUE IF NOT EXISTS 'HUB_MANAGER';
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
 
+
+-- db/contacts.sql
+CREATE TABLE IF NOT EXISTS contacts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  full_name VARCHAR(150) NOT NULL,
+  email VARCHAR(150),
+  phone VARCHAR(30),
+  subject VARCHAR(200),
+  message TEXT NOT NULL,
+  status VARCHAR(30) DEFAULT 'NEW',     -- NEW / OPEN / RESOLVED
+  assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+  metadata JSONB,                       -- optional extras
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts(status);
+CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON contacts(created_at);

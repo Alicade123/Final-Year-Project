@@ -57,6 +57,9 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (phone, password) => api.post("/auth/login", { phone, password }),
 
+  signupFarmer: (data) =>
+    api.post("/auth/register-farmer", data).then((res) => res.data),
+
   register: (userData) => api.post("/auth/register", userData),
 
   getProfile: () => api.get("/auth/profile"),
@@ -280,4 +283,11 @@ export const adminAPI = {
   getClerks: () => api.get("/admin/clerks"),
 };
 
+export const contactAPI = {
+  submit: (payload) => api.post("/contacts", payload).then((res) => res.data),
+  list: (params) => api.get("/contacts", { params }).then((res) => res.data), // admin
+  get: (id) => api.get(`/contacts/${id}`).then((res) => res.data),
+  update: (id, payload) =>
+    api.put(`/contacts/${id}`, payload).then((res) => res.data),
+};
 export default api;

@@ -6,7 +6,7 @@ const authRoutes = require("./routes/authRoutes");
 const farmerRoutes = require("./routes/farmerRoutes");
 const buyerRoutes = require("./routes/buyerRoutes");
 const clerkRoutes = require("./routes/clerkRoutes");
-const adminRoutes = require("./src/routes/adminRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const app = express();
 
 // Middleware

@@ -82,6 +82,18 @@ exports.requireRole = (role) => {
   };
 };
 
+exports.authorizeRole =
+  (roles = []) =>
+  (req, res, next) => {
+    // roles can be string or array
+    const allowed = Array.isArray(roles) ? roles : [roles];
+    const userRole = req.user?.role; // assuming authenticate attaches req.user
+    if (!userRole || !allowed.includes(userRole)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    next();
+  };
+
 /**
  * Optional authentication - doesn't fail if no token
  */

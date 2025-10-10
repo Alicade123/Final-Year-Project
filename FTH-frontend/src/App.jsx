@@ -6,7 +6,9 @@ import BuyerDashboard from "./pages/BuyerDashboard";
 import FarmerDashboard from "./pages/FarmerDashboard";
 import LoginPage from "./pages/LoginPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import FarmerSignupPage from "./pages/FarmerSignupPage";
 import LoginSuccess from "./pages/LoginSuccess";
+import ContactUs from "./pages/ContactUs";
 export default function App() {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -15,11 +17,13 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login-success" element={<LoginSuccess />} />
+          <Route path="/register" element={<FarmerSignupPage />} />
           <Route path="/clerk" element={<ClerkDashboard />} />
           <Route path="/buyer" element={<BuyerDashboard />} />
           <Route path="/farmer" element={<FarmerDashboard />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/contact" element={<ContactUs />} />
         </Routes>
       </main>
     </div>

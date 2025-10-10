@@ -70,6 +70,36 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.registerFarmer = async (req, res) => {
+  try {
+    const { full_name, phone, email, password } = req.body;
+
+    const exists = await db.query(
+      "SELECT id FROM users WHERE phone = $1 OR email = $2",
+      [phone, email]
+    );
+    if (exists.rows.length > 0) {
+      return res.status(400).json({ message: "User already exists." });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const newFarmer = await db.query(
+      `INSERT INTO users (full_name, phone, email, password_hash, role, is_active)
+       VALUES ($1, $2, $3, $4, 'BUYER', TRUE)
+       RETURNING id, full_name, phone, email, role`,
+      [full_name, phone, email, password_hash]
+    );
+
+    res.status(201).json({
+      message: "Farmer account created successfully!",
+      user: newFarmer.rows[0],
+    });
+  } catch (err) {
+    console.error("Farmer signup error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 /**
  * Login user
  */
