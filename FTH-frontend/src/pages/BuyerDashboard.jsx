@@ -1,5 +1,5 @@
 // src/pages/BuyerDashboard.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -28,6 +28,7 @@ import {
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import { buyerAPI } from "../services/api";
 import CheckoutModal from "../components/CheckoutModal";
+import { toast } from "react-toastify";
 const menuItems = [
   { key: "overview", label: "Dashboard", icon: LayoutDashboard },
   { key: "marketplace", label: "Marketplace", icon: ShoppingCart },
@@ -862,6 +863,221 @@ function CartModal({
     </div>
   );
 }
+// function Orders() {
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const [mode, setMode] = useState("LIST"); // LIST | DETAILS
+//   const [selectedOrder, setSelectedOrder] = useState(null);
+//   const [showPayment, setShowPayment] = useState(false);
+//   const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY");
+//   const [loading, setLoading] = useState(false);
+
+//   const {
+//     data,
+//     loading: loadingOrders,
+//     error,
+//     refetch,
+//   } = useAPI(() => buyerAPI.getMyOrders(statusFilter), [statusFilter]);
+
+//   const handleViewDetails = async (order) => {
+//     const details = await buyerAPI.getOrderDetails(order.id);
+//     setSelectedOrder(details);
+//     setMode("DETAILS");
+//     setShowPayment(false);
+//   };
+
+//   const handlePayment = async () => {
+//     try {
+//       setLoading(true);
+//       await buyerAPI.initiatePayment(selectedOrder.id, {
+//         method: paymentMethod,
+//         providerRef: "TXN-" + Date.now(), // generate dummy ref for now
+//       });
+//       alert("✅ Payment initiated successfully!");
+//       await refetch();
+//       setMode("LIST");
+//     } catch (err) {
+//       alert(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   if (loadingOrders) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} />;
+
+//   if (mode === "DETAILS" && selectedOrder) {
+//     return (
+//       <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
+//         <h3 className="text-2xl font-bold">
+//           Order #{selectedOrder.id.substring(0, 8)}
+//         </h3>
+//         <p className="text-neutral-600">
+//           Hub: {selectedOrder.hub_name} ({selectedOrder.hub_location})
+//         </p>
+//         <p>Status: {selectedOrder.status}</p>
+
+//         <div className="border-t pt-4 space-y-2">
+//           {selectedOrder.items.map((item, idx) => (
+//             <div key={idx} className="flex justify-between">
+//               <span>
+//                 {item.produce_name} × {item.quantity} {item.unit}
+//               </span>
+//               <span>${item.price}</span>
+//             </div>
+//           ))}
+//         </div>
+
+//         <div className="flex justify-between font-bold text-lg">
+//           <span>Total</span>
+//           <span>${selectedOrder.total_amount}</span>
+//         </div>
+
+//         {/* Actions */}
+//         <div className="space-y-4">
+//           {selectedOrder.status === "PENDING" && (
+//             <>
+//               {!showPayment ? (
+//                 <div className="flex gap-4">
+//                   <button
+//                     onClick={() => handleViewDetails(null)}
+//                     className="px-4 py-2 border rounded-xl"
+//                   >
+//                     Back
+//                   </button>
+//                   <button
+//                     onClick={() => setShowPayment(true)}
+//                     className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
+//                   >
+//                     Pay Now
+//                   </button>
+//                 </div>
+//               ) : (
+//                 <div className="border-t pt-4 space-y-4">
+//                   <label className="block">
+//                     <span className="text-sm text-gray-600">
+//                       Select Payment Method
+//                     </span>
+//                     <select
+//                       value={paymentMethod}
+//                       onChange={(e) => setPaymentMethod(e.target.value)}
+//                       className="mt-1 border px-3 py-2 rounded-lg w-full"
+//                     >
+//                       <option value="MOBILE_MONEY">Mobile Money</option>
+//                       <option value="BANK_TRANSFER">Bank Transfer</option>
+//                       <option value="CASH">Cash</option>
+//                       <option value="ONLINE">Online Payment</option>
+//                     </select>
+//                   </label>
+
+//                   <div className="flex gap-4">
+//                     <button
+//                       onClick={() => setShowPayment(false)}
+//                       className="px-4 py-2 border rounded-xl"
+//                     >
+//                       Cancel
+//                     </button>
+//                     <button
+//                       disabled={loading}
+//                       onClick={handlePayment}
+//                       className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+//                     >
+//                       {loading ? "Processing..." : "Confirm Payment"}
+//                     </button>
+//                   </div>
+//                 </div>
+//               )}
+//             </>
+//           )}
+
+//           {/* Back button always available */}
+//           <button
+//             onClick={() => setMode("LIST")}
+//             className="px-4 py-2 border rounded-xl w-full"
+//           >
+//             Back to Orders
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // ---- Default LIST Mode ----
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">My Orders</h3>
+//           <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
+//         </div>
+//         <select
+//           value={statusFilter}
+//           onChange={(e) => setStatusFilter(e.target.value)}
+//           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+//         >
+//           <option value="">All Orders</option>
+//           <option value="PENDING">Pending</option>
+//           <option value="PAID">Paid</option>
+//           <option value="FULFILLED">Fulfilled</option>
+//           <option value="CANCELLED">Cancelled</option>
+//         </select>
+//       </div>
+
+//       <div className="space-y-4">
+//         {data?.orders?.map((order, i) => (
+//           <div
+//             key={i}
+//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow"
+//           >
+//             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+//               <div className="flex-1">
+//                 <div className="flex items-center gap-3 mb-2">
+//                   <span className="font-bold text-lg text-neutral-800">
+//                     #{order.id.substring(0, 8)}
+//                   </span>
+//                   <span
+//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
+//                       order.status === "FULFILLED"
+//                         ? "bg-emerald-100 text-emerald-700"
+//                         : order.status === "PENDING"
+//                         ? "bg-amber-100 text-amber-700"
+//                         : order.status === "PAID"
+//                         ? "bg-green-100 text-green-700"
+//                         : "bg-red-100 text-red-700"
+//                     }`}
+//                   >
+//                     {order.status}
+//                   </span>
+//                 </div>
+//                 <p className="text-neutral-600 mb-1">
+//                   {order.hub_name} • {order.items?.length || 0} items
+//                 </p>
+//                 <p className="text-sm text-neutral-500">
+//                   {new Date(order.created_at).toLocaleDateString()}
+//                 </p>
+//               </div>
+//               <div className="flex items-center gap-4">
+//                 <div className="text-right">
+//                   <p className="text-sm text-neutral-500">Total</p>
+//                   <p className="text-2xl font-bold text-green-600">
+//                     ${order.total_amount}
+//                   </p>
+//                 </div>
+//                 <button
+//                   onClick={() => handleViewDetails(order)}
+//                   className="bg-green-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors"
+//                 >
+//                   View Details
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+
+// Purchase History Component
 function Orders() {
   const [statusFilter, setStatusFilter] = useState("");
   const [mode, setMode] = useState("LIST"); // LIST | DETAILS
@@ -869,6 +1085,7 @@ function Orders() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY");
   const [loading, setLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const {
     data,
@@ -889,7 +1106,7 @@ function Orders() {
       setLoading(true);
       await buyerAPI.initiatePayment(selectedOrder.id, {
         method: paymentMethod,
-        providerRef: "TXN-" + Date.now(), // generate dummy ref for now
+        providerRef: "TXN-" + Date.now(),
       });
       alert("✅ Payment initiated successfully!");
       await refetch();
@@ -901,9 +1118,27 @@ function Orders() {
     }
   };
 
+  // 🧨 New: Cancel order handler
+  const handleCancelOrder = async () => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
+
+    try {
+      setCancelLoading(true);
+      await buyerAPI.cancelOrder(selectedOrder.id);
+      alert("❌ Order has been cancelled successfully.");
+      await refetch();
+      setMode("LIST");
+    } catch (err) {
+      alert(err.message || "Failed to cancel order.");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   if (loadingOrders) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
+  // ---- DETAILS Mode ----
   if (mode === "DETAILS" && selectedOrder) {
     return (
       <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
@@ -913,7 +1148,20 @@ function Orders() {
         <p className="text-neutral-600">
           Hub: {selectedOrder.hub_name} ({selectedOrder.hub_location})
         </p>
-        <p>Status: {selectedOrder.status}</p>
+        <p>
+          Status:{" "}
+          <span
+            className={`font-semibold ${
+              selectedOrder.status === "CANCELLED"
+                ? "text-red-600"
+                : selectedOrder.status === "PAID"
+                ? "text-green-600"
+                : "text-amber-600"
+            }`}
+          >
+            {selectedOrder.status}
+          </span>
+        </p>
 
         <div className="border-t pt-4 space-y-2">
           {selectedOrder.items.map((item, idx) => (
@@ -936,18 +1184,28 @@ function Orders() {
           {selectedOrder.status === "PENDING" && (
             <>
               {!showPayment ? (
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                   <button
-                    onClick={() => handleViewDetails(null)}
+                    onClick={() => setMode("LIST")}
                     className="px-4 py-2 border rounded-xl"
                   >
                     Back
                   </button>
+
                   <button
                     onClick={() => setShowPayment(true)}
                     className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
                   >
                     Pay Now
+                  </button>
+
+                  {/* 🧨 Cancel Order button */}
+                  <button
+                    disabled={cancelLoading}
+                    onClick={handleCancelOrder}
+                    className="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {cancelLoading ? "Cancelling..." : "Cancel Order"}
                   </button>
                 </div>
               ) : (
@@ -1000,7 +1258,7 @@ function Orders() {
     );
   }
 
-  // ---- Default LIST Mode ----
+  // ---- LIST Mode ----
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1075,8 +1333,6 @@ function Orders() {
     </div>
   );
 }
-
-// Purchase History Component
 function PurchaseHistory() {
   const { data, loading, error } = useAPI(() => buyerAPI.getPurchaseHistory());
 
@@ -1211,13 +1467,67 @@ function Notifications() {
   );
 }
 
-// Settings Component
-function SettingsTab() {
+//Settings
+
+export function SettingsTab() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
+    status: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [originalData, setOriginalData] = useState({}); // store initial data for cancel
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const data = await buyerAPI.getProfile();
+      const profile = {
+        fullName: data.full_name || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        status: data.is_active ? "Active" : "Inactive",
+      };
+      setFormData(profile);
+      setOriginalData(profile); // save for cancel
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+      toast.error("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await buyerAPI.updateProfile({
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+      });
+      toast.success("Profile updated successfully");
+      setEditing(false);
+      setOriginalData(formData);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      toast.error("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData(originalData);
+    setEditing(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -1230,9 +1540,20 @@ function SettingsTab() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-neutral-200 p-8">
-          <h4 className="text-xl font-bold text-neutral-800 mb-6">
-            Personal Information
-          </h4>
+          <div className="flex justify-between items-center mb-6">
+            <h4 className="text-xl font-bold text-neutral-800">
+              Personal Information
+            </h4>
+            {!editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-green-600 font-semibold hover:underline"
+              >
+                Enable Edit
+              </button>
+            )}
+          </div>
+
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
@@ -1240,42 +1561,74 @@ function SettingsTab() {
               </label>
               <input
                 type="text"
+                disabled={!editing}
                 value={formData.fullName}
                 onChange={(e) =>
                   setFormData({ ...formData, fullName: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full border rounded-xl px-4 py-3 ${
+                  editing
+                    ? "border-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    : "bg-neutral-50 border-neutral-200"
+                }`}
               />
             </div>
+
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
                 Email
               </label>
               <input
                 type="email"
+                disabled={!editing}
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full border rounded-xl px-4 py-3 ${
+                  editing
+                    ? "border-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    : "bg-neutral-50 border-neutral-200"
+                }`}
               />
             </div>
+
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
                 Phone
               </label>
               <input
                 type="tel"
+                disabled={!editing}
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full border rounded-xl px-4 py-3 ${
+                  editing
+                    ? "border-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    : "bg-neutral-50 border-neutral-200"
+                }`}
               />
             </div>
-            <button className="bg-gradient-to-r from-green-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
-              Save Changes
-            </button>
+
+            {editing && (
+              <div className="flex gap-4 mt-4">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-gradient-to-r from-green-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="border border-neutral-300 px-8 py-3 rounded-xl font-semibold text-neutral-700 hover:bg-neutral-100 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1283,19 +1636,11 @@ function SettingsTab() {
           <div className="bg-gradient-to-br from-green-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
             <h4 className="text-lg font-bold mb-4">Account Status</h4>
             <div className="space-y-3">
-              <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-green-100">Member Since</span>
-                <span className="font-bold">Jan 2025</span>
-              </div>
-              <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-green-100">Total Orders</span>
-                <span className="font-bold">45</span>
-              </div>
               <div className="flex items-center justify-between">
                 <span className="text-green-100">Status</span>
                 <span className="font-bold flex items-center gap-1">
                   <CheckCircle size={16} />
-                  Active
+                  {formData.status}
                 </span>
               </div>
             </div>

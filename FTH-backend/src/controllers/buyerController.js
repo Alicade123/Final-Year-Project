@@ -723,3 +723,42 @@ exports.getPurchaseHistory = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch purchase history" });
   }
 };
+
+// GET /buyer/profile
+exports.getProfile = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        id,
+        full_name,
+        email,
+        phone,
+        role,
+        is_active
+      FROM users
+      WHERE id = $1
+    `;
+    const { rows } = await db.query(query, [req.user.id]);
+    if (rows.length === 0)
+      return res.status(404).json({ message: "User not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("Error fetching buyer profile:", err);
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
+};
+
+// PUT /buyer/profile
+exports.updateProfile = async (req, res) => {
+  const { full_name, email, phone } = req.body;
+  try {
+    await db.query(
+      "UPDATE users SET full_name=$1, email=$2, phone=$3 WHERE id=$4",
+      [full_name, email, phone, req.user.id]
+    );
+    res.json({ message: "Profile updated successfully" });
+  } catch (err) {
+    console.error("Error updating buyer profile:", err);
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+};

@@ -581,3 +581,49 @@ exports.getMarketPrices = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch market prices" });
   }
 };
+
+// GET /farmer/profile
+// controllers/farmerController.js
+
+exports.getProfile = async (req, res) => {
+  // console.log("👤 Authenticated user:", req.user); // <--- ADD THIS
+  try {
+    const query = `
+  SELECT 
+    u.id,
+    u.full_name,
+    u.email,
+    u.phone,
+    u.role,
+    u.metadata,
+    u.is_active,
+    h.name AS hub_name,
+    h.location
+  FROM users u
+  LEFT JOIN hubs h 
+    ON (u.metadata->>'hub_id')::UUID = h.id
+  WHERE u.id = $1
+`;
+
+    const farmer = await db.query(query, [req.user.id]);
+
+    if (farmer.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(farmer.rows[0]);
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
+};
+
+// PUT /farmer/profile
+exports.updateProfile = async (req, res) => {
+  const { full_name, email, phone } = req.body;
+  await db.query(
+    "UPDATE users SET full_name=$1, email=$2, phone=$3 WHERE id=$4",
+    [full_name, email, phone, req.user.id]
+  );
+  res.json({ message: "Profile updated successfully" });
+};

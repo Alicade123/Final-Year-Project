@@ -198,6 +198,8 @@ export const buyerAPI = {
     if (endDate) params.append("endDate", endDate);
     return api.get(`/buyer/purchase-history?${params}`);
   },
+  getProfile: () => api.get("/buyer/profile"),
+  updateProfile: (data) => api.put("/buyer/profile", data),
 
   // Notifications
   getNotifications: (page = 1, limit = 20) =>
@@ -261,6 +263,9 @@ export const farmerAPI = {
     api.patch(`/farmer/notifications/${notificationId}/read`),
 
   markAllNotificationsRead: () => api.patch("/farmer/notifications/read-all"),
+
+  getProfile: () => api.get("/farmer/profile"),
+  updateProfile: (data) => api.put("/farmer/profile", data),
 };
 
 export const adminAPI = {

@@ -73,4 +73,7 @@ router.patch(
   buyerController.markNotificationRead
 );
 
+router.get("/profile", buyerController.getProfile);
+router.put("/profile", buyerController.updateProfile);
+
 module.exports = router;

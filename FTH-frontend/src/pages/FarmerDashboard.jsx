@@ -1,5 +1,5 @@
 // src/pages/FarmerDashboard.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -20,12 +20,13 @@ import {
   Clock,
   Sprout,
   BarChart3,
+  Loader,
   History,
   ShoppingBag,
 } from "lucide-react";
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import { farmerAPI } from "../services/api";
-
+import { toast } from "react-toastify";
 const menuItems = [
   { key: "overview", label: "Dashboard", icon: LayoutDashboard },
   { key: "products", label: "My Products", icon: Package },
@@ -1145,7 +1146,12 @@ function Notifications() {
                 </p>
               </div>
               {!notif.is_read && (
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                <button
+                  onClick={() => farmerAPI.markNotificationRead(notif.id)}
+                  className="text-green-600 hover:underline text-sm"
+                >
+                  Mark as Read
+                </button>
               )}
             </div>
           </div>
@@ -1156,95 +1162,175 @@ function Notifications() {
 }
 
 // Settings Component
-function SettingsTab() {
+// src/pages/SettingsTab.jsx
+
+export function SettingsTab() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
+    status: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  // Fetch profile data
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const data = await farmerAPI.getProfile();
+
+      setFormData({
+        fullName: data.full_name || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        status: data.is_active ? "Active" : "Inactive",
+      });
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+      toast.error("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await farmerAPI.updateProfile({
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+      });
+      toast.success("Profile updated successfully");
+      setEditing(false);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      toast.error("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h3 className="text-2xl font-bold text-neutral-800">
-          Account Settings
+          Profile Information
         </h3>
-        <p className="text-neutral-500">Manage your farmer account</p>
+        <p className="text-neutral-500">View or update your account details.</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-neutral-200 p-8">
-          <h4 className="text-xl font-bold text-neutral-800 mb-6">
-            Personal Information
-          </h4>
-          <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8">
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader className="animate-spin text-green-600" />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* User Info */}
             <div>
-              <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                Full Name
+              <label className="block text-sm font-semibold text-neutral-700 mb-1">
+                Name
               </label>
               <input
                 type="text"
+                disabled={!editing}
                 value={formData.fullName}
                 onChange={(e) =>
                   setFormData({ ...formData, fullName: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full border rounded-xl px-4 py-3 ${
+                  editing
+                    ? "border-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    : "bg-neutral-50 border-neutral-200"
+                }`}
               />
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-neutral-700 mb-2">
+              <label className="block text-sm font-semibold text-neutral-700 mb-1">
                 Email
               </label>
               <input
                 type="email"
+                disabled={!editing}
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full border rounded-xl px-4 py-3 ${
+                  editing
+                    ? "border-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    : "bg-neutral-50 border-neutral-200"
+                }`}
               />
             </div>
+
             <div>
-              <label className="block text-sm font-semibold text-neutral-700 mb-2">
+              <label className="block text-sm font-semibold text-neutral-700 mb-1">
                 Phone
               </label>
               <input
                 type="tel"
+                disabled={!editing}
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className={`w-full border rounded-xl px-4 py-3 ${
+                  editing
+                    ? "border-green-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    : "bg-neutral-50 border-neutral-200"
+                }`}
               />
             </div>
-            <button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
-              Save Changes
-            </button>
-          </div>
-        </div>
 
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl shadow-lg p-6 text-white">
-            <h4 className="text-lg font-bold mb-4">Account Status</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-green-100">Member Since</span>
-                <span className="font-bold">Jan 2025</span>
-              </div>
-              <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-green-100">Total Products</span>
-                <span className="font-bold">45</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-green-100">Status</span>
-                <span className="font-bold flex items-center gap-1">
-                  <CheckCircle size={16} />
-                  Active
-                </span>
-              </div>
+            <div>
+              <label className="block text-sm font-semibold text-neutral-700 mb-1">
+                Status
+              </label>
+              <p className="text-neutral-800 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3">
+                {formData.status}
+              </p>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Buttons */}
+        {!loading && (
+          <div className="mt-8 flex gap-4">
+            {!editing ? (
+              <button
+                onClick={() => setEditing(true)}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                Edit info
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="border border-neutral-300 px-8 py-3 rounded-xl font-semibold text-neutral-700 hover:bg-neutral-100 transition-all"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
