@@ -535,68 +535,162 @@ exports.cancelOrder = async (req, res) => {
 /**
  * Initiate Payment for Order
  */
+// exports.initiatePayment = async (req, res) => {
+//   try {
+//     const { orderId } = req.params;
+//     const { method, providerRef } = req.body;
+//     const buyerId = req.user.id;
+
+//     // Validate payment method
+//     if (!["MOBILE_MONEY", "BANK_TRANSFER", "CASH", "ONLINE"].includes(method)) {
+//       return res.status(400).json({ error: "Invalid payment method" });
+//     }
+
+//     await db.transaction(async (client) => {
+//       // Get order
+//       const orderResult = await client.query(
+//         "SELECT * FROM orders WHERE id = $1 AND buyer_id = $2",
+//         [orderId, buyerId]
+//       );
+
+//       if (orderResult.rows.length === 0) {
+//         throw new Error("Order not found");
+//       }
+
+//       const order = orderResult.rows[0];
+
+//       if (order.status !== "PENDING") {
+//         throw new Error("Order is not in pending status");
+//       }
+
+//       // Calculate fees (example: 10% hub fee)
+//       const hubFeePercent = 0.1;
+//       const hubFee = order.total_amount * hubFeePercent;
+//       const farmerAmount = order.total_amount - hubFee;
+
+//       // Create payment record
+//       const paymentResult = await client.query(
+//         `INSERT INTO payments (
+//           order_id, amount, hub_fee, farmer_amount, method, provider_ref
+//         ) VALUES ($1, $2, $3, $4, $5, $6)
+//         RETURNING *`,
+//         [orderId, order.total_amount, hubFee, farmerAmount, method, providerRef]
+//       );
+
+//       // Create notification
+//       await client.query(
+//         `INSERT INTO notifications (user_id, type, title, message)
+//          VALUES ($1, 'PAYMENT', 'Payment Initiated',
+//          'Payment of $' || $2 || ' has been initiated for order #' || SUBSTRING($3::text, 1, 8))`,
+//         [buyerId, order.total_amount, orderId]
+//       );
+
+//       return paymentResult.rows[0];
+//     });
+
+//     res.json({
+//       message: "Payment initiated successfully",
+//       note: "Payment confirmation pending",
+//     });
+//   } catch (error) {
+//     console.error("Error initiating payment:", error);
+//     res
+//       .status(400)
+//       .json({ error: error.message || "Failed to initiate payment" });
+//   }
+// };
 exports.initiatePayment = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { method, providerRef } = req.body;
     const buyerId = req.user.id;
 
-    // Validate payment method
-    if (!["MOBILE_MONEY", "BANK_TRANSFER", "CASH", "ONLINE"].includes(method)) {
-      return res.status(400).json({ error: "Invalid payment method" });
-    }
-
-    await db.transaction(async (client) => {
-      // Get order
-      const orderResult = await client.query(
-        "SELECT * FROM orders WHERE id = $1 AND buyer_id = $2",
+    const result = await db.transaction(async (client) => {
+      // 🧾 1. Fetch the order
+      const orderRes = await client.query(
+        `SELECT * FROM orders WHERE id = $1 AND buyer_id = $2`,
         [orderId, buyerId]
       );
+      if (orderRes.rows.length === 0) throw new Error("Order not found");
 
-      if (orderResult.rows.length === 0) {
-        throw new Error("Order not found");
-      }
+      const order = orderRes.rows[0];
+      if (order.status !== "PENDING")
+        throw new Error("Order already processed");
 
-      const order = orderResult.rows[0];
-
-      if (order.status !== "PENDING") {
-        throw new Error("Order is not in pending status");
-      }
-
-      // Calculate fees (example: 10% hub fee)
+      // 💰 2. Compute hub fee and farmer total
       const hubFeePercent = 0.1;
-      const hubFee = order.total_amount * hubFeePercent;
-      const farmerAmount = order.total_amount - hubFee;
+      const hubFee = parseFloat(order.total_amount) * hubFeePercent;
+      const farmerAmount = parseFloat(order.total_amount) - hubFee;
 
-      // Create payment record
-      const paymentResult = await client.query(
+      // 💳 3. Create payment record
+      const paymentRes = await client.query(
         `INSERT INTO payments (
-          order_id, amount, hub_fee, farmer_amount, method, provider_ref
-        ) VALUES ($1, $2, $3, $4, $5, $6)
+          order_id, amount, hub_fee, farmer_amount, method, provider_ref, status, paid_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,'SUCCESS',NOW())
         RETURNING *`,
         [orderId, order.total_amount, hubFee, farmerAmount, method, providerRef]
       );
+      const payment = paymentRes.rows[0];
 
-      // Create notification
+      // 📦 4. Mark order as PAID
+      await client.query(`UPDATE orders SET status = 'PAID' WHERE id = $1`, [
+        orderId,
+      ]);
+
+      // 🧮 5. Get order items and compute proportional split
+      const itemsRes = await client.query(
+        `SELECT oi.*, l.farmer_id
+         FROM order_items oi
+         JOIN lots l ON oi.lot_id = l.id
+         WHERE oi.order_id = $1`,
+        [orderId]
+      );
+
+      const totalSubtotal = itemsRes.rows.reduce(
+        (sum, i) => sum + parseFloat(i.subtotal),
+        0
+      );
+
+      // 👩‍🌾 6. Create payout per farmer
+      for (const item of itemsRes.rows) {
+        const farmerShare =
+          (parseFloat(item.subtotal) / totalSubtotal) * farmerAmount;
+
+        await client.query(
+          `INSERT INTO payouts (payment_id, farmer_id, amount, status)
+           VALUES ($1, $2, $3, 'PENDING')`,
+          [payment.id, item.farmer_id, farmerShare]
+        );
+
+        // 🔔 Notify farmer
+        await client.query(
+          `INSERT INTO notifications (user_id, type, title, message)
+           VALUES ($1, 'PAYOUT', 'Pending Payout',
+           'Your produce from order #' || SUBSTRING($2::text,1,8) ||
+           ' has been sold. Pending payout: $' || ROUND($3,2))`,
+          [item.farmer_id, orderId, farmerShare]
+        );
+      }
+
+      // 🔔 Notify buyer
       await client.query(
         `INSERT INTO notifications (user_id, type, title, message)
-         VALUES ($1, 'PAYMENT', 'Payment Initiated', 
-         'Payment of $' || $2 || ' has been initiated for order #' || SUBSTRING($3::text, 1, 8))`,
+         VALUES ($1,'PAYMENT','Payment Successful',
+         'Your payment of $' || $2 || ' for order #' || SUBSTRING($3::text,1,8) ||
+         ' was successful.')`,
         [buyerId, order.total_amount, orderId]
       );
 
-      return paymentResult.rows[0];
+      return { payment, farmers: itemsRes.rows.length };
     });
 
     res.json({
-      message: "Payment initiated successfully",
-      note: "Payment confirmation pending",
+      message: "✅ Payment completed successfully",
+      result,
     });
   } catch (error) {
-    console.error("Error initiating payment:", error);
-    res
-      .status(400)
-      .json({ error: error.message || "Failed to initiate payment" });
+    console.error("Error completing payment:", error);
+    res.status(400).json({ error: error.message });
   }
 };
 

@@ -162,7 +162,7 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <button className="group bg-gradient-to-r from-amber-400 to-orange-500 text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center gap-3 shadow-2xl hover:shadow-amber-500/50 transition-all hover:scale-105">
               <Link className="hover:cursor-pointer" to={"login"}>
-                Get startd
+                Get started
               </Link>
               <ArrowRight
                 size={20}

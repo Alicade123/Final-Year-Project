@@ -21,8 +21,13 @@ import {
   AlertCircle,
   Menu,
   X,
+  Send,
   Loader2,
 } from "lucide-react";
+import { toast } from "react-toastify";
+// import LoadingSpinner from "@/components/LoadingSpinner";
+// import ErrorMessage from "@/components/ErrorMessage";
+
 import { clerkAPI } from "../services/api";
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import { ProductModal } from "../components/ProductModel";
@@ -1181,8 +1186,117 @@ function Orders() {
   );
 }
 
-function Payouts() {
-  const { data, loading, error } = useAPI(() => clerkAPI.getPayouts());
+// function Payouts() {
+//   const { data, loading, error } = useAPI(() => clerkAPI.getPayouts());
+
+//   if (loading) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} />;
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">
+//             Farmer Payouts
+//           </h3>
+//           <p className="text-neutral-500">Total: {data?.total || 0} payouts</p>
+//         </div>
+//       </div>
+
+//       <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden">
+//         <div className="overflow-x-auto">
+//           <table className="w-full">
+//             <thead className="bg-gradient-to-r from-purple-50 to-pink-50">
+//               <tr>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Farmer
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Phone
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Amount
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Date
+//                 </th>
+//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
+//                   Status
+//                 </th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {data?.payouts?.map((payout, i) => (
+//                 <tr
+//                   key={i}
+//                   className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors"
+//                 >
+//                   <td className="px-6 py-4 font-medium text-neutral-800">
+//                     {payout.farmer_name}
+//                   </td>
+//                   <td className="px-6 py-4 text-neutral-600">
+//                     {payout.farmer_phone}
+//                   </td>
+//                   <td className="px-6 py-4 font-bold text-emerald-600">
+//                     ${payout.amount}
+//                   </td>
+//                   <td className="px-6 py-4 text-neutral-600">
+//                     {new Date(payout.payment_date).toLocaleDateString()}
+//                   </td>
+//                   <td className="px-6 py-4">
+//                     <span
+//                       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+//                         payout.status === "SENT"
+//                           ? "bg-emerald-100 text-emerald-700"
+//                           : "bg-amber-100 text-amber-700"
+//                       }`}
+//                     >
+//                       {payout.status === "SENT" ? (
+//                         <CheckCircle size={12} />
+//                       ) : (
+//                         <Clock size={12} />
+//                       )}
+//                       {payout.status}
+//                     </span>
+//                   </td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+export function Payouts() {
+  const { data, loading, error, refetch } = useAPI(() => clerkAPI.getPayouts());
+  const { execute: processPayout } = useAPICall();
+  const [selectedPayout, setSelectedPayout] = useState(null);
+  const [providerRef, setProviderRef] = useState("");
+  const [processing, setProcessing] = useState(false);
+
+  const handleProcess = async () => {
+    if (!selectedPayout || !providerRef) {
+      toast.error("Please enter a provider reference number");
+      return;
+    }
+    try {
+      setProcessing(true);
+      await processPayout(clerkAPI.processPayout, selectedPayout.id, {
+        providerRef,
+      });
+      toast.success("Payout marked as SENT");
+      setSelectedPayout(null);
+      setProviderRef("");
+      await refetch(); // refresh data
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to process payout");
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
@@ -1218,12 +1332,15 @@ function Payouts() {
                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
                   Status
                 </th>
+                <th className="px-6 py-4 text-sm font-bold text-neutral-700">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
-              {data?.payouts?.map((payout, i) => (
+              {data?.payouts?.map((payout) => (
                 <tr
-                  key={i}
+                  key={payout.id}
                   className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors"
                 >
                   <td className="px-6 py-4 font-medium text-neutral-800">
@@ -1254,16 +1371,67 @@ function Payouts() {
                       {payout.status}
                     </span>
                   </td>
+                  <td className="px-6 py-4">
+                    {payout.status === "PENDING" && (
+                      <button
+                        onClick={() => setSelectedPayout(payout)}
+                        className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow hover:shadow-md transition"
+                      >
+                        <Send size={14} /> Process
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal */}
+      {selectedPayout && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold text-neutral-800 mb-4">
+              Process Payout
+            </h3>
+            <p className="text-sm text-neutral-600 mb-4">
+              Enter provider reference for{" "}
+              <span className="font-semibold">
+                {selectedPayout.farmer_name}
+              </span>
+              ’s payout of ${selectedPayout.amount}.
+            </p>
+
+            <input
+              type="text"
+              value={providerRef}
+              onChange={(e) => setProviderRef(e.target.value)}
+              placeholder="Enter Provider Reference"
+              className="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedPayout(null)}
+                className="px-5 py-2 rounded-xl border border-neutral-300 hover:bg-neutral-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProcess}
+                disabled={processing}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-green-600 to-indigo-600 text-white font-semibold shadow hover:shadow-lg transition disabled:opacity-50"
+              >
+                {processing ? "Processing..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
 function Reports() {
   const [reportType, setReportType] = useState("");
   const { data, loading, error } = useAPI(
