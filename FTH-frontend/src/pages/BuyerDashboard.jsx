@@ -538,9 +538,9 @@ function ProductCard({ product, onAddToCart }) {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow">
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
+      {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
         🌾
-      </div>
+      </div> */}
       <div className="p-6">
         <div className="flex items-start justify-between mb-3">
           <h4 className="font-bold text-xl text-neutral-800">
@@ -589,7 +589,7 @@ function ProductCard({ product, onAddToCart }) {
 
         <button
           onClick={() => onAddToCart(product, quantity)}
-          className="w-full bg-gradient-to-r from-green-600 to-indigo-600 text-white px-4 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+          className="w-full bg-green-800 text-white px-3 py-2 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
         >
           <ShoppingCart size={18} />
           Add to Cart

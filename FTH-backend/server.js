@@ -13,6 +13,7 @@ const clerkRoutes = require("./src/routes/clerkRoutes");
 const buyerRoutes = require("./src/routes/buyerRoutes");
 const farmerRoutes = require("./src/routes/farmerRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
+const contactRoutes = require("./src/routes/contactRoutes");
 
 // Import middleware
 const { notFound, errorHandler } = require("./src/middleware/errorHandler");
@@ -72,6 +73,7 @@ app.use("/api/clerk", clerkRoutes);
 app.use("/api/buyer", buyerRoutes);
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/contacts", contactRoutes);
 
 // Welcome route
 app.get("/", (req, res) => {

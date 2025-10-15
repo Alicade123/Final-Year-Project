@@ -761,49 +761,231 @@ function Farmers() {
 // Products, Orders, Payouts, Reports, Notifications, Settings components
 // These follow the same pattern - I'll create shortened versions
 
-function Products() {
-  const { data, loading, error, execute } = useAPI(() =>
-    clerkAPI.getProducts()
-  );
+// function Products() {
+//   const { data, loading, error, execute } = useAPI(() =>
+//     clerkAPI.getProducts()
+//   );
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [editProduct, setEditProduct] = useState(null);
+//   const [deleteProduct, setDeleteProduct] = useState(null);
+//   const [deleting, setDeleting] = useState(false);
+//   const [deleteError, setDeleteError] = useState("");
+
+//   if (loading) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} />;
+
+//   const handleSuccess = async () => {
+//     setIsModalOpen(false);
+//     setEditProduct(null);
+//   };
+
+//   const handleDelete = async () => {
+//     if (!deleteProduct) return;
+
+//     try {
+//       setDeleting(true);
+//       setDeleteError("");
+
+//       await fetch(`/api/clerk/products/${deleteProduct.id}`, {
+//         method: "DELETE",
+//       }).then(async (res) => {
+//         if (!res.ok) {
+//           const data = await res.json();
+//           throw new Error(data.error || "Failed to delete product");
+//         }
+//       });
+
+//       // Reset delete state and refresh list
+//       setDeleteProduct(null);
+//       await execute();
+//     } catch (err) {
+//       setDeleteError(err.message || "Failed to delete product");
+//     } finally {
+//       setDeleting(false);
+//     }
+//   };
+
+//   return (
+//     <div className="space-y-6">
+//       {/* Header */}
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">
+//             Products Inventory
+//           </h3>
+//           <p className="text-neutral-500">Total: {data?.total || 0} products</p>
+//         </div>
+//         <button
+//           onClick={() => {
+//             setEditProduct(null);
+//             setIsModalOpen(true);
+//           }}
+//           className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+//         >
+//           <Plus size={18} /> Add Product
+//         </button>
+//       </div>
+
+//       {/* Products Grid */}
+//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+//         {data?.products?.map((product, i) => (
+//           <div
+//             key={i}
+//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow"
+//           >
+//             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
+//               🌾
+//             </div>
+//             <div className="p-6">
+//               <div className="flex items-start justify-between mb-3">
+//                 <h4 className="font-bold text-xl text-neutral-800">
+//                   {product.produce_name}
+//                 </h4>
+//                 <span
+//                   className={`text-xs font-semibold px-2 py-1 rounded-full ${
+//                     product.status === "AVAILABLE"
+//                       ? "bg-emerald-100 text-emerald-700"
+//                       : "bg-amber-100 text-amber-700"
+//                   }`}
+//                 >
+//                   {product.status}
+//                 </span>
+//               </div>
+//               <p className="text-neutral-600 mb-2">
+//                 {product.quantity} {product.unit} available
+//               </p>
+//               <p className="text-emerald-600 font-bold text-lg mb-4">
+//                 ${product.price_per_unit}/{product.unit}
+//               </p>
+//               <p className="text-sm text-neutral-500 mb-4">
+//                 Farmer: {product.farmer_name}
+//               </p>
+
+//               <div className="flex gap-2">
+//                 {/* Edit Button */}
+//                 <button
+//                   onClick={() => {
+//                     setEditProduct(product);
+//                     setIsModalOpen(true);
+//                   }}
+//                   className="flex-1 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors"
+//                 >
+//                   Edit
+//                 </button>
+
+//                 {/* Delete Button */}
+//                 <button
+//                   onClick={() => setDeleteProduct(product)}
+//                   className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+//                 >
+//                   <Trash2 size={18} />
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+
+//       {/* Delete Confirmation Modal */}
+//       {deleteProduct && (
+//         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+//           <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+//             <h3 className="text-lg font-bold text-neutral-800 mb-4">
+//               Confirm Deletion
+//             </h3>
+//             <p className="text-neutral-600 mb-4">
+//               Are you sure you want to delete{" "}
+//               <strong>{deleteProduct.produce_name}</strong>?
+//             </p>
+//             {deleteError && (
+//               <p className="text-red-500 text-sm mb-2">{deleteError}</p>
+//             )}
+//             <div className="flex gap-2">
+//               <button
+//                 onClick={() => setDeleteProduct(null)}
+//                 className="flex-1 px-4 py-2 border rounded-lg"
+//               >
+//                 Cancel
+//               </button>
+//               <button
+//                 onClick={handleDelete}
+//                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg"
+//                 disabled={deleting}
+//               >
+//                 {deleting ? "Deleting..." : "Delete"}
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Product Modal */}
+//       <ProductModal
+//         isOpen={isModalOpen}
+//         onClose={() => {
+//           setIsModalOpen(false);
+//           setEditProduct(null);
+//         }}
+//         onSuccess={handleSuccess}
+//         editProduct={editProduct}
+//       />
+//     </div>
+//   );
+// }
+
+export function Products() {
+  const [productsData, setProductsData] = useState({ products: [], total: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [deleteProduct, setDeleteProduct] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 12; // products per page
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error} />;
-
-  const handleSuccess = async () => {
-    setIsModalOpen(false);
-    setEditProduct(null);
+  const loadProducts = async (page = 1) => {
+    setLoading(true);
+    try {
+      const data = await clerkAPI.getProducts("AVAILABLE", page, limit);
+      setProductsData(data);
+    } catch (err) {
+      setError(err.message || "Failed to fetch products");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadProducts(page);
+  }, [page]);
 
   const handleDelete = async () => {
     if (!deleteProduct) return;
-
     try {
       setDeleting(true);
       setDeleteError("");
-
-      await fetch(`/api/clerk/products/${deleteProduct.id}`, {
-        method: "DELETE",
-      }).then(async (res) => {
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to delete product");
-        }
-      });
-
-      // Reset delete state and refresh list
+      await clerkAPI.deleteProduct(deleteProduct.id);
       setDeleteProduct(null);
-      await execute();
+      loadProducts(page);
     } catch (err) {
       setDeleteError(err.message || "Failed to delete product");
     } finally {
       setDeleting(false);
     }
   };
+
+  const handleModalSuccess = () => {
+    setIsModalOpen(false);
+    setEditProduct(null);
+    loadProducts(page);
+  };
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage message={error} />;
+
+  const totalPages = Math.ceil(productsData.total / limit);
 
   return (
     <div className="space-y-6">
@@ -813,7 +995,9 @@ function Products() {
           <h3 className="text-2xl font-bold text-neutral-800">
             Products Inventory
           </h3>
-          <p className="text-neutral-500">Total: {data?.total || 0} products</p>
+          <p className="text-neutral-500">
+            Total: {productsData.total} products
+          </p>
         </div>
         <button
           onClick={() => {
@@ -828,14 +1012,21 @@ function Products() {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {data?.products?.map((product, i) => (
+        {productsData.products.map((product) => (
           <div
-            key={i}
+            key={product.id}
             className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow"
           >
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
+            {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
               🌾
-            </div>
+            </div> */}
+            {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50  p-3 flex items-center justify-center">
+              <img
+                src="/sample.jpg" // assuming your image is public/sample.png
+                alt="Product"
+                className="w-44 h-24 object-contain"
+              />
+            </div> */}
             <div className="p-6">
               <div className="flex items-start justify-between mb-3">
                 <h4 className="font-bold text-xl text-neutral-800">
@@ -860,9 +1051,7 @@ function Products() {
               <p className="text-sm text-neutral-500 mb-4">
                 Farmer: {product.farmer_name}
               </p>
-
               <div className="flex gap-2">
-                {/* Edit Button */}
                 <button
                   onClick={() => {
                     setEditProduct(product);
@@ -872,8 +1061,6 @@ function Products() {
                 >
                   Edit
                 </button>
-
-                {/* Delete Button */}
                 <button
                   onClick={() => setDeleteProduct(product)}
                   className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
@@ -886,7 +1073,30 @@ function Products() {
         ))}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Delete Modal */}
       {deleteProduct && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
@@ -926,7 +1136,7 @@ function Products() {
           setIsModalOpen(false);
           setEditProduct(null);
         }}
-        onSuccess={handleSuccess}
+        onSuccess={handleModalSuccess}
         editProduct={editProduct}
       />
     </div>

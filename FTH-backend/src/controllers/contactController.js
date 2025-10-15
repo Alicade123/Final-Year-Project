@@ -1,16 +1,14 @@
-// controllers/contactController.js
 const db = require("../config/db");
 const { v4: uuidv4 } = require("uuid");
 
+// Public: create contact message
 exports.createContact = async (req, res) => {
   try {
     const { full_name, email, phone, subject, message } = req.body;
-
-    if (!full_name || !message) {
+    if (!full_name || !message)
       return res
         .status(400)
         .json({ message: "Name and message are required." });
-    }
 
     const result = await db.query(
       `INSERT INTO contacts (id, full_name, email, phone, subject, message, metadata)
@@ -26,12 +24,7 @@ exports.createContact = async (req, res) => {
       ]
     );
 
-    // Optionally: push a notification or send an email to admin here
-
-    res.status(201).json({
-      message: "Message sent. We will contact you soon.",
-      contact: result.rows[0],
-    });
+    res.status(201).json({ message: "Message sent.", contact: result.rows[0] });
   } catch (err) {
     console.error("createContact error:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -41,7 +34,7 @@ exports.createContact = async (req, res) => {
 // Admin: list contacts (paginated)
 exports.listContacts = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit, 10) || 20;
+    const limit = parseInt(req.query.limit, 10) || 1000; // default: return all for admin
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const offset = (page - 1) * limit;
 
@@ -57,12 +50,7 @@ exports.listContacts = async (req, res) => {
       [limit, offset]
     );
 
-    res.json({
-      total,
-      page,
-      limit,
-      data: dataRes.rows,
-    });
+    res.json({ total, page, limit, data: dataRes.rows });
   } catch (err) {
     console.error("listContacts error:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -74,8 +62,7 @@ exports.getContact = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.query("SELECT * FROM contacts WHERE id = $1", [id]);
-
-    if (result.rows.length === 0)
+    if (!result.rows.length)
       return res.status(404).json({ message: "Not found" });
     res.json(result.rows[0]);
   } catch (err) {
@@ -84,7 +71,7 @@ exports.getContact = async (req, res) => {
   }
 };
 
-// Admin: update contact status or assign
+// Admin: update contact
 exports.updateContact = async (req, res) => {
   try {
     const { id } = req.params;
@@ -102,11 +89,10 @@ exports.updateContact = async (req, res) => {
       updates.push(`assigned_to = $${idx++}`);
       values.push(assigned_to);
     }
-
-    if (updates.length === 0)
+    if (!updates.length)
       return res.status(400).json({ message: "No updates provided" });
 
-    values.push(id); // last param
+    values.push(id);
     const sql = `UPDATE contacts SET ${updates.join(
       ", "
     )} WHERE id = $${idx} RETURNING *`;

@@ -7,6 +7,8 @@ const farmerRoutes = require("./routes/farmerRoutes");
 const buyerRoutes = require("./routes/buyerRoutes");
 const clerkRoutes = require("./routes/clerkRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const contactRoutes = require("./routes/contactRoutes"); // ✅ added
+
 const app = express();
 
 // Middleware
@@ -19,6 +21,7 @@ app.use("/api/farmers", farmerRoutes);
 app.use("/api/buyers", buyerRoutes);
 app.use("/api/clerks", clerkRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/contacts", contactRoutes); // ✅ added
 
 app.get("/", (req, res) => {
   res.json({ message: "🌱 Farmers Trade Hub API running..." });

@@ -1,30 +1,28 @@
-// routes/contactRoutes.js
 const express = require("express");
 const router = express.Router();
 const contactController = require("../controllers/contactController");
-const { authenticate } = require("../middleware/auth");
-const { authorizeRole } = require("../middleware/authorize");
+const { authenticate, authorizeRoles } = require("../middleware/auth");
 
-// Public: submit contact
+// 📨 Public route — anyone can send a message
 router.post("/", contactController.createContact);
 
-// Admin: list, get, update
+// 👑 Admin-only routes
 router.get(
   "/",
   authenticate,
-  authorizeRole(["ADMIN"]),
+  authorizeRoles("ADMIN"),
   contactController.listContacts
 );
 router.get(
   "/:id",
   authenticate,
-  authorizeRole(["ADMIN"]),
+  authorizeRoles("ADMIN"),
   contactController.getContact
 );
 router.put(
   "/:id",
   authenticate,
-  authorizeRole(["ADMIN"]),
+  authorizeRoles("ADMIN"),
   contactController.updateContact
 );
 

@@ -443,9 +443,9 @@ function MyProducts() {
             key={i}
             className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow"
           >
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 flex items-center justify-center text-6xl">
+            {/* <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 flex items-center justify-center text-6xl">
               🌾
-            </div>
+            </div> */}
             <div className="p-6">
               <div className="flex items-start justify-between mb-3">
                 <h4 className="font-bold text-xl text-neutral-800">

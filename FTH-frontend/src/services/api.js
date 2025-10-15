@@ -289,10 +289,10 @@ export const adminAPI = {
 };
 
 export const contactAPI = {
-  submit: (payload) => api.post("/contacts", payload).then((res) => res.data),
-  list: (params) => api.get("/contacts", { params }).then((res) => res.data), // admin
-  get: (id) => api.get(`/contacts/${id}`).then((res) => res.data),
+  submit: (payload) =>
+    api.post("/contacts", payload).then((res) => res.contact),
+  list: (params) => api.get("/contacts", { params }).then((res) => res.data), // directly returns array
+  get: (id) => api.get(`/contacts/${id}`).then((res) => res.contact || res),
   update: (id, payload) =>
-    api.put(`/contacts/${id}`, payload).then((res) => res.data),
+    api.put(`/contacts/${id}`, payload).then((res) => res.contact || res),
 };
-export default api;
