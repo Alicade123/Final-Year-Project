@@ -14,6 +14,7 @@ const buyerRoutes = require("./src/routes/buyerRoutes");
 const farmerRoutes = require("./src/routes/farmerRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const contactRoutes = require("./src/routes/contactRoutes");
+const notificationRoutes = require("./src/routes/notificationRoutes");
 
 // Import middleware
 const { notFound, errorHandler } = require("./src/middleware/errorHandler");
@@ -23,7 +24,7 @@ const db = require("./src/config/db");
 
 // Initialize express app
 const app = express();
-
+app.use(express.json());
 // Security middleware
 app.use(helmet());
 
@@ -74,7 +75,7 @@ app.use("/api/buyer", buyerRoutes);
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/contacts", contactRoutes);
-
+app.use("/api/notifications", notificationRoutes);
 // Welcome route
 app.get("/", (req, res) => {
   res.json({
