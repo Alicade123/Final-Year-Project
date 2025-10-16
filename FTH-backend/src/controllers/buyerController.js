@@ -535,153 +535,97 @@ exports.cancelOrder = async (req, res) => {
 /**
  * Initiate Payment for Order
  */
-// exports.initiatePayment = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { method, providerRef } = req.body;
-//     const buyerId = req.user.id;
-
-//     // Validate payment method
-//     if (!["MOBILE_MONEY", "BANK_TRANSFER", "CASH", "ONLINE"].includes(method)) {
-//       return res.status(400).json({ error: "Invalid payment method" });
-//     }
-
-//     await db.transaction(async (client) => {
-//       // Get order
-//       const orderResult = await client.query(
-//         "SELECT * FROM orders WHERE id = $1 AND buyer_id = $2",
-//         [orderId, buyerId]
-//       );
-
-//       if (orderResult.rows.length === 0) {
-//         throw new Error("Order not found");
-//       }
-
-//       const order = orderResult.rows[0];
-
-//       if (order.status !== "PENDING") {
-//         throw new Error("Order is not in pending status");
-//       }
-
-//       // Calculate fees (example: 10% hub fee)
-//       const hubFeePercent = 0.1;
-//       const hubFee = order.total_amount * hubFeePercent;
-//       const farmerAmount = order.total_amount - hubFee;
-
-//       // Create payment record
-//       const paymentResult = await client.query(
-//         `INSERT INTO payments (
-//           order_id, amount, hub_fee, farmer_amount, method, provider_ref
-//         ) VALUES ($1, $2, $3, $4, $5, $6)
-//         RETURNING *`,
-//         [orderId, order.total_amount, hubFee, farmerAmount, method, providerRef]
-//       );
-
-//       // Create notification
-//       await client.query(
-//         `INSERT INTO notifications (user_id, type, title, message)
-//          VALUES ($1, 'PAYMENT', 'Payment Initiated',
-//          'Payment of $' || $2 || ' has been initiated for order #' || SUBSTRING($3::text, 1, 8))`,
-//         [buyerId, order.total_amount, orderId]
-//       );
-
-//       return paymentResult.rows[0];
-//     });
-
-//     res.json({
-//       message: "Payment initiated successfully",
-//       note: "Payment confirmation pending",
-//     });
-//   } catch (error) {
-//     console.error("Error initiating payment:", error);
-//     res
-//       .status(400)
-//       .json({ error: error.message || "Failed to initiate payment" });
-//   }
-// };
+// Buyer paying Hub (no farmer payout)
 exports.initiatePayment = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { method, providerRef } = req.body;
+    const { method, providerRef, description } = req.body;
     const buyerId = req.user.id;
-
+    function generateProviderRef(method) {
+      const number = Math.floor(100000000 + Math.random() * 900000000);
+      const letters = Array.from({ length: 3 }, () =>
+        String.fromCharCode(65 + Math.floor(Math.random() * 26))
+      ).join("");
+      return `${method};${number}:${letters}`;
+    }
     const result = await db.transaction(async (client) => {
-      // 🧾 1. Fetch the order
+      // 1️⃣ Validate order ownership and status
       const orderRes = await client.query(
-        `SELECT * FROM orders WHERE id = $1 AND buyer_id = $2`,
+        `SELECT o.*, h.id AS hub_id, h.manager_id AS hub_manager
+         FROM orders o
+         JOIN hubs h ON o.hub_id = h.id
+         WHERE o.id = $1 AND o.buyer_id = $2`,
         [orderId, buyerId]
       );
-      if (orderRes.rows.length === 0) throw new Error("Order not found");
+
+      if (orderRes.rows.length === 0)
+        throw new Error("Order not found or not owned by buyer.");
 
       const order = orderRes.rows[0];
+
       if (order.status !== "PENDING")
-        throw new Error("Order already processed");
+        throw new Error("Order is not in pending state.");
 
-      // 💰 2. Compute hub fee and farmer total
-      const hubFeePercent = 0.1;
-      const hubFee = parseFloat(order.total_amount) * hubFeePercent;
-      const farmerAmount = parseFloat(order.total_amount) - hubFee;
-
-      // 💳 3. Create payment record
+      // 2️⃣ Create payment record
       const paymentRes = await client.query(
         `INSERT INTO payments (
-          order_id, amount, hub_fee, farmer_amount, method, provider_ref, status, paid_at
-        ) VALUES ($1,$2,$3,$4,$5,$6,'SUCCESS',NOW())
+          order_id,
+          amount,
+          hub_fee,
+          farmer_amount,
+          method,
+          status,
+          provider_ref,
+          payer_id,
+          payer_role,
+          payee_id,
+          payee_role,
+          target_entity,
+          description,
+          paid_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, 'SUCCESS', $6,
+          $7, 'BUYER', $8, 'HUB_MANAGER', $9, $10, NOW()
+        )
         RETURNING *`,
-        [orderId, order.total_amount, hubFee, farmerAmount, method, providerRef]
+        [
+          orderId,
+          order.total_amount,
+          0, // hub_fee (no fee at this stage)
+          0, // farmer_amount (will be computed later during payout)
+          method,
+          providerRef || generateProviderRef(method) || null,
+          buyerId,
+          order.hub_manager,
+          order.hub_id,
+          description || "Payment from buyer to hub",
+        ]
       );
+
       const payment = paymentRes.rows[0];
 
-      // 📦 4. Mark order as PAID
+      // 3️⃣ Mark order as PAID
       await client.query(`UPDATE orders SET status = 'PAID' WHERE id = $1`, [
         orderId,
       ]);
 
-      // 🧮 5. Get order items and compute proportional split
-      const itemsRes = await client.query(
-        `SELECT oi.*, l.farmer_id
-         FROM order_items oi
-         JOIN lots l ON oi.lot_id = l.id
-         WHERE oi.order_id = $1`,
-        [orderId]
-      );
-
-      const totalSubtotal = itemsRes.rows.reduce(
-        (sum, i) => sum + parseFloat(i.subtotal),
-        0
-      );
-
-      // 👩‍🌾 6. Create payout per farmer
-      for (const item of itemsRes.rows) {
-        const farmerShare =
-          (parseFloat(item.subtotal) / totalSubtotal) * farmerAmount;
-
-        await client.query(
-          `INSERT INTO payouts (payment_id, farmer_id, amount, status)
-           VALUES ($1, $2, $3, 'PENDING')`,
-          [payment.id, item.farmer_id, farmerShare]
-        );
-
-        // 🔔 Notify farmer
-        await client.query(
-          `INSERT INTO notifications (user_id, type, title, message)
-           VALUES ($1, 'PAYOUT', 'Pending Payout',
-           'Your produce from order #' || SUBSTRING($2::text,1,8) ||
-           ' has been sold. Pending payout: $' || ROUND($3,2))`,
-          [item.farmer_id, orderId, farmerShare]
-        );
-      }
-
-      // 🔔 Notify buyer
+      // 4️⃣ Notify hub manager about payment
       await client.query(
         `INSERT INTO notifications (user_id, type, title, message)
-         VALUES ($1,'PAYMENT','Payment Successful',
-         'Your payment of $' || $2 || ' for order #' || SUBSTRING($3::text,1,8) ||
-         ' was successful.')`,
+         VALUES ($1, 'PAYMENT', 'New Payment Received',
+         'Buyer has paid RWF ' || $2 || ' for order #' || SUBSTRING($3::text,1,8))`,
+        [order.hub_manager, order.total_amount, orderId]
+      );
+
+      // 5️⃣ Notify buyer about success
+      await client.query(
+        `INSERT INTO notifications (user_id, type, title, message)
+         VALUES ($1, 'PAYMENT', 'Payment Successful',
+         'You successfully paid RWF ' || $2 || ' to the hub for order #' || SUBSTRING($3::text,1,8))`,
         [buyerId, order.total_amount, orderId]
       );
 
-      return { payment, farmers: itemsRes.rows.length };
+      return { payment };
     });
 
     res.json({

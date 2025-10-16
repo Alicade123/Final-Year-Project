@@ -140,3 +140,13 @@ CREATE TABLE IF NOT EXISTS contacts (
 
 CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts(status);
 CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON contacts(created_at);
+
+ALTER TABLE payments
+ADD COLUMN IF NOT EXISTS payer_role role_enum, -- 'BUYER' or 'CLERK'
+ADD COLUMN IF NOT EXISTS payee_role role_enum, -- 'HUB' or 'FARMER'
+ADD COLUMN IF NOT EXISTS target_entity UUID;   -- hub_id or farmer_id reference
+ALTER TABLE payments
+ADD COLUMN IF NOT EXISTS payer_id UUID REFERENCES users(id) ON DELETE SET NULL,
+ADD COLUMN IF NOT EXISTS payee_id UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE payments
+ADD COLUMN IF NOT EXISTS description TEXT;

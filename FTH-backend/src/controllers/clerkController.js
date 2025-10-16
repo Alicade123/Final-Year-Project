@@ -114,135 +114,6 @@ exports.getRecentActivity = async (req, res) => {
   }
 };
 
-// /**
-//  * Get All Farmers for the Hub
-//  */
-// exports.getFarmers = async (req, res) => {
-//   try {
-//     const clerkId = req.user.id;
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 20;
-//     const offset = (page - 1) * limit;
-
-//     const hubResult = await db.query(
-//       "SELECT id FROM hubs WHERE manager_id = $1",
-//       [clerkId]
-//     );
-
-//     if (hubResult.rows.length === 0) {
-//       return res.status(404).json({ error: "Hub not found" });
-//     }
-
-//     const hubId = hubResult.rows[0].id;
-
-//     // Get farmers who have delivered to this hub
-//     const farmers = await db.query(
-//       `SELECT DISTINCT
-//         u.id,
-//         u.full_name,
-//         u.phone,
-//         u.email,
-//         u.metadata->>'location' as location,
-//         u.is_active,
-//         u.created_at as joined,
-//         COUNT(l.id) as total_deliveries,
-//         COALESCE(SUM(l.quantity), 0) as total_quantity
-//        FROM users u
-//        JOIN lots l ON u.id = l.farmer_id
-//        WHERE u.role = 'FARMER'
-//        AND l.hub_id = $1
-//        GROUP BY u.id
-//        ORDER BY u.created_at DESC
-//        LIMIT $2 OFFSET $3`,
-//       [hubId, limit, offset]
-//     );
-
-//     // Get total count
-//     const countResult = await db.query(
-//       `SELECT COUNT(DISTINCT farmer_id) as total
-//        FROM lots WHERE hub_id = $1`,
-//       [hubId]
-//     );
-
-//     res.json({
-//       farmers: farmers.rows,
-//       total: parseInt(countResult.rows[0].total),
-//       page,
-//       limit,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching farmers:", error);
-//     res.status(500).json({ error: "Failed to fetch farmers" });
-//   }
-// };
-
-//**
-//  * Get All Farmers for the Hub (including those with 0 deliveries, but only if assigned to this hub)
-//  */
-// exports.getFarmers = async (req, res) => {
-//   try {
-//     const clerkId = req.user.id;
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 20;
-//     const offset = (page - 1) * limit;
-
-//     // find hub managed by this clerk
-//     const hubResult = await db.query(
-//       "SELECT id FROM hubs WHERE manager_id = $1",
-//       [clerkId]
-//     );
-
-//     if (hubResult.rows.length === 0) {
-//       return res.status(404).json({ error: "Hub not found" });
-//     }
-
-//     const hubId = hubResult.rows[0].id;
-
-//     // list all farmers assigned to this hub (via metadata->>'hub_id')
-//     const farmers = await db.query(
-//       `SELECT
-//          u.id,
-//          u.full_name,
-//          u.phone,
-//          u.email,
-//          u.metadata->>'location' as location,
-//          u.is_active,
-//          u.created_at as joined,
-//          COUNT(l.id) as total_deliveries,
-//          COALESCE(SUM(l.quantity), 0) as total_quantity
-//        FROM users u
-//        LEFT JOIN lots l
-//          ON u.id = l.farmer_id
-//         AND l.hub_id = $1
-//        WHERE u.role = 'FARMER'
-//          AND u.metadata->>'hub_id' = $1
-//        GROUP BY u.id
-//        ORDER BY u.created_at DESC
-//        LIMIT $2 OFFSET $3`,
-//       [hubId, limit, offset]
-//     );
-
-//     // count only farmers belonging to this hub
-//     const countResult = await db.query(
-//       `SELECT COUNT(*) as total
-//        FROM users u
-//        WHERE u.role = 'FARMER'
-//          AND u.metadata->>'hub_id' = $1`,
-//       [hubId]
-//     );
-
-//     res.json({
-//       farmers: farmers.rows,
-//       total: parseInt(countResult.rows[0].total),
-//       page,
-//       limit,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching farmers:", error);
-//     res.status(500).json({ error: "Failed to fetch farmers" });
-//   }
-// };
-
 /**
  * Get All Farmers for the Hub (including those with 0 deliveries)
  */
@@ -580,6 +451,77 @@ exports.getProducts = async (req, res) => {
 /**
  * Register New Product/Lot
  */
+// exports.registerProduct = async (req, res) => {
+//   try {
+//     const clerkId = req.user.id;
+//     const {
+//       farmerId,
+//       produceName,
+//       category,
+//       quantity,
+//       unit,
+//       pricePerUnit,
+//       expiryDate,
+//       notes,
+//     } = req.body;
+
+//     // Validate required fields
+//     if (!farmerId || !produceName || !quantity || !unit || !pricePerUnit) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     const hubResult = await db.query(
+//       "SELECT id FROM hubs WHERE manager_id = $1",
+//       [clerkId]
+//     );
+
+//     if (hubResult.rows.length === 0) {
+//       return res.status(404).json({ error: "Hub not found" });
+//     }
+
+//     const hubId = hubResult.rows[0].id;
+
+//     // Generate lot code
+//     const lotCode = `LOT-${Date.now()}-${Math.random()
+//       .toString(36)
+//       .substr(2, 9)
+//       .toUpperCase()}`;
+
+//     const result = await db.query(
+//       `INSERT INTO lots (
+//         hub_id, farmer_id, lot_code, produce_name, category,
+//         quantity, unit, price_per_unit, expiry_date, notes
+//       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+//       RETURNING *`,
+//       [
+//         hubId,
+//         farmerId,
+//         lotCode,
+//         produceName,
+//         category,
+//         quantity,
+//         unit,
+//         pricePerUnit,
+//         expiryDate,
+//         notes,
+//       ]
+//     );
+
+//     // Create notification for farmer
+//     await db.query(
+//       `INSERT INTO notifications (user_id, type, title, message)
+//        VALUES ($1, 'DELIVERY', 'Product Registered',
+//        'Your delivery of ' || $2 || ' ' || $3 || ' ' || $4 || ' has been registered at the hub.')`,
+//       [farmerId, quantity, unit, produceName]
+//     );
+
+//     res.status(201).json(result.rows[0]);
+//   } catch (error) {
+//     console.error("Error registering product:", error);
+//     res.status(500).json({ error: "Failed to register product" });
+//   }
+// };
+
 exports.registerProduct = async (req, res) => {
   try {
     const clerkId = req.user.id;
@@ -594,60 +536,110 @@ exports.registerProduct = async (req, res) => {
       notes,
     } = req.body;
 
-    // Validate required fields
     if (!farmerId || !produceName || !quantity || !unit || !pricePerUnit) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const hubResult = await db.query(
-      "SELECT id FROM hubs WHERE manager_id = $1",
-      [clerkId]
-    );
+    const result = await db.transaction(async (client) => {
+      // 🏢 1. Find hub managed by clerk
+      const hubRes = await client.query(
+        `SELECT id, name FROM hubs WHERE manager_id = $1`,
+        [clerkId]
+      );
+      if (hubRes.rows.length === 0) throw new Error("Hub not found");
+      const hub = hubRes.rows[0];
 
-    if (hubResult.rows.length === 0) {
-      return res.status(404).json({ error: "Hub not found" });
-    }
+      // 🔢 2. Generate unique lot code
+      const lotCode = `LOT-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 6)
+        .toUpperCase()}`;
 
-    const hubId = hubResult.rows[0].id;
+      // 📦 3. Insert product/lot
+      const lotRes = await client.query(
+        `INSERT INTO lots (
+          hub_id, farmer_id, lot_code, produce_name, category,
+          quantity, unit, price_per_unit, expiry_date, notes
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        RETURNING *`,
+        [
+          hub.id,
+          farmerId,
+          lotCode,
+          produceName,
+          category,
+          quantity,
+          unit,
+          pricePerUnit,
+          expiryDate,
+          notes,
+        ]
+      );
 
-    // Generate lot code
-    const lotCode = `LOT-${Date.now()}-${Math.random()
-      .toString(36)
-      .substr(2, 9)
-      .toUpperCase()}`;
+      const lot = lotRes.rows[0];
+      const totalValue = parseFloat(quantity) * parseFloat(pricePerUnit);
 
-    const result = await db.query(
-      `INSERT INTO lots (
-        hub_id, farmer_id, lot_code, produce_name, category,
-        quantity, unit, price_per_unit, expiry_date, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *`,
-      [
-        hubId,
-        farmerId,
-        lotCode,
-        produceName,
-        category,
-        quantity,
-        unit,
-        pricePerUnit,
-        expiryDate,
-        notes,
-      ]
-    );
+      // 💰 4. Compute payment details
+      const hubFeeRate = 0.1; // 10% commission (adjust as needed)
+      const hubFee = totalValue * hubFeeRate;
+      const farmerAmount = totalValue - hubFee;
 
-    // Create notification for farmer
-    await db.query(
-      `INSERT INTO notifications (user_id, type, title, message)
-       VALUES ($1, 'DELIVERY', 'Product Registered', 
-       'Your delivery of ' || $2 || ' ' || $3 || ' ' || $4 || ' has been registered at the hub.')`,
-      [farmerId, quantity, unit, produceName]
-    );
+      // 🧾 5. Create a minimal order record (auto-generated)
+      const orderRes = await client.query(
+        `INSERT INTO orders (buyer_id, hub_id, total_amount, status)
+         VALUES ($1, $2, $3, 'PAID')
+         RETURNING id`,
+        [clerkId, hub.id, totalValue]
+      );
+      const orderId = orderRes.rows[0].id;
 
-    res.status(201).json(result.rows[0]);
+      // 💳 6. Insert payment record (fully compliant with schema)
+      const paymentRes = await client.query(
+        `INSERT INTO payments (
+          order_id, amount, hub_fee, farmer_amount,
+          method, status, payer_id, payer_role, payee_id, payee_role,
+          target_entity, description, paid_at
+        ) VALUES ($1,$2,$3,$4,'ONLINE','SUCCESS',$5,'CLERK',$6,'FARMER',$7,$8,NOW())
+        RETURNING *`,
+        [
+          orderId,
+          totalValue,
+          hubFee,
+          farmerAmount,
+          clerkId,
+          farmerId,
+          hub.id,
+          `Payment for ${quantity} ${unit} of ${produceName} from ${hub.name}`,
+        ]
+      );
+
+      // 👩‍🌾 7. Record payout (completed instantly)
+      await client.query(
+        `INSERT INTO payouts (payment_id, farmer_id, amount, status, created_at)
+         VALUES ($1, $2, $3, 'SENT', NOW())`,
+        [paymentRes.rows[0].id, farmerId, farmerAmount]
+      );
+
+      // 🔔 8. Notify farmer
+      await client.query(
+        `INSERT INTO notifications (user_id, type, title, message)
+         VALUES ($1, 'PAYMENT', 'Payment Received',
+         'You have received $' || $2 || ' for your registered product: ' || $3)`,
+        [farmerId, farmerAmount.toFixed(2), produceName]
+      );
+
+      return { lot, payment: paymentRes.rows[0] };
+    });
+
+    res.status(201).json({
+      message: "✅ Product registered and payment processed successfully.",
+      data: result,
+    });
   } catch (error) {
-    console.error("Error registering product:", error);
-    res.status(500).json({ error: "Failed to register product" });
+    console.error("Error registering product and payment:", error);
+    res.status(500).json({
+      error: error.message || "Failed to register product and process payment",
+    });
   }
 };
 

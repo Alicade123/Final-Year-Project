@@ -25,9 +25,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
-// import LoadingSpinner from "@/components/LoadingSpinner";
-// import ErrorMessage from "@/components/ErrorMessage";
-
 import { clerkAPI } from "../services/api";
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import { ProductModal } from "../components/ProductModel";
@@ -939,9 +936,6 @@ export function Products() {
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
-  const [deleteProduct, setDeleteProduct] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
   const [page, setPage] = useState(1);
   const limit = 12; // products per page
 
@@ -960,21 +954,6 @@ export function Products() {
   useEffect(() => {
     loadProducts(page);
   }, [page]);
-
-  const handleDelete = async () => {
-    if (!deleteProduct) return;
-    try {
-      setDeleting(true);
-      setDeleteError("");
-      await clerkAPI.deleteProduct(deleteProduct.id);
-      setDeleteProduct(null);
-      loadProducts(page);
-    } catch (err) {
-      setDeleteError(err.message || "Failed to delete product");
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   const handleModalSuccess = () => {
     setIsModalOpen(false);
@@ -1061,12 +1040,6 @@ export function Products() {
                 >
                   Edit
                 </button>
-                <button
-                  onClick={() => setDeleteProduct(product)}
-                  className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
               </div>
             </div>
           </div>
@@ -1093,39 +1066,6 @@ export function Products() {
           >
             Next
           </button>
-        </div>
-      )}
-
-      {/* Delete Modal */}
-      {deleteProduct && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold text-neutral-800 mb-4">
-              Confirm Deletion
-            </h3>
-            <p className="text-neutral-600 mb-4">
-              Are you sure you want to delete{" "}
-              <strong>{deleteProduct.produce_name}</strong>?
-            </p>
-            {deleteError && (
-              <p className="text-red-500 text-sm mb-2">{deleteError}</p>
-            )}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDeleteProduct(null)}
-                className="flex-1 px-4 py-2 border rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg"
-                disabled={deleting}
-              >
-                {deleting ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
