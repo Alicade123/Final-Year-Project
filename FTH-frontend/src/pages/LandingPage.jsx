@@ -418,7 +418,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-neutral-900 text-neutral-300 py-16">
-        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-4 gap-12">
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12 pl-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <Sprout className="text-emerald-500" size={36} />
@@ -440,7 +440,7 @@ export default function LandingPage() {
               </a>
               <a
                 href="#"
-                className="w-10 h-10 bg-neutral-800 hover:bg-blue-500 rounded-lg flex items-center justify-center transition-all"
+                className="w-10 h-10 bg-neutral-800 hover:bg-green-500 rounded-lg flex items-center justify-center transition-all"
               >
                 <svg
                   className="w-5 h-5"
@@ -452,7 +452,7 @@ export default function LandingPage() {
               </a>
               <a
                 href="#"
-                className="w-10 h-10 bg-neutral-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-all"
+                className="w-10 h-10 bg-neutral-800 hover:bg-green-600 rounded-lg flex items-center justify-center transition-all"
               >
                 <svg
                   className="w-5 h-5"
@@ -518,21 +518,22 @@ export default function LandingPage() {
                   className="flex-shrink-0 mt-1 text-emerald-500"
                 />
                 <span className="text-sm">
-                  Ruhango District, Southern Province, Rwanda
+                  Ruhango District, <br />
+                  Southern Province, Rwanda
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={18} className="text-emerald-500" />
                 <a
-                  href="mailto:info@fth.rw"
+                  href="mailto:farmertradehub@gmail.com"
                   className="text-sm hover:text-emerald-400 transition-colors"
                 >
-                  info@fth.rw
+                  farmertradehub@gmail.com
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={18} className="text-emerald-500" />
-                <span className="text-sm">+250 788 123 456</span>
+                <span className="text-sm">+250 788 888 888</span>
               </li>
             </ul>
           </div>

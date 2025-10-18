@@ -448,80 +448,7 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-/**
- * Register New Product/Lot
- */
-// exports.registerProduct = async (req, res) => {
-//   try {
-//     const clerkId = req.user.id;
-//     const {
-//       farmerId,
-//       produceName,
-//       category,
-//       quantity,
-//       unit,
-//       pricePerUnit,
-//       expiryDate,
-//       notes,
-//     } = req.body;
-
-//     // Validate required fields
-//     if (!farmerId || !produceName || !quantity || !unit || !pricePerUnit) {
-//       return res.status(400).json({ error: "Missing required fields" });
-//     }
-
-//     const hubResult = await db.query(
-//       "SELECT id FROM hubs WHERE manager_id = $1",
-//       [clerkId]
-//     );
-
-//     if (hubResult.rows.length === 0) {
-//       return res.status(404).json({ error: "Hub not found" });
-//     }
-
-//     const hubId = hubResult.rows[0].id;
-
-//     // Generate lot code
-//     const lotCode = `LOT-${Date.now()}-${Math.random()
-//       .toString(36)
-//       .substr(2, 9)
-//       .toUpperCase()}`;
-
-//     const result = await db.query(
-//       `INSERT INTO lots (
-//         hub_id, farmer_id, lot_code, produce_name, category,
-//         quantity, unit, price_per_unit, expiry_date, notes
-//       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-//       RETURNING *`,
-//       [
-//         hubId,
-//         farmerId,
-//         lotCode,
-//         produceName,
-//         category,
-//         quantity,
-//         unit,
-//         pricePerUnit,
-//         expiryDate,
-//         notes,
-//       ]
-//     );
-
-//     // Create notification for farmer
-//     await db.query(
-//       `INSERT INTO notifications (user_id, type, title, message)
-//        VALUES ($1, 'DELIVERY', 'Product Registered',
-//        'Your delivery of ' || $2 || ' ' || $3 || ' ' || $4 || ' has been registered at the hub.')`,
-//       [farmerId, quantity, unit, produceName]
-//     );
-
-//     res.status(201).json(result.rows[0]);
-//   } catch (error) {
-//     console.error("Error registering product:", error);
-//     res.status(500).json({ error: "Failed to register product" });
-//   }
-// };
-
+//Register new products
 exports.registerProduct = async (req, res) => {
   try {
     const clerkId = req.user.id;
@@ -616,7 +543,7 @@ exports.registerProduct = async (req, res) => {
       // 👩‍🌾 7. Record payout (completed instantly)
       await client.query(
         `INSERT INTO payouts (payment_id, farmer_id, amount, status, created_at)
-         VALUES ($1, $2, $3, 'SENT', NOW())`,
+         VALUES ($1, $2, $3, 'PENDING', NOW())`,
         [paymentRes.rows[0].id, farmerId, farmerAmount]
       );
 
@@ -624,7 +551,7 @@ exports.registerProduct = async (req, res) => {
       await client.query(
         `INSERT INTO notifications (user_id, type, title, message)
          VALUES ($1, 'PAYMENT', 'Payment Received',
-         'You have received $' || $2 || ' for your registered product: ' || $3)`,
+         'You have Pending Payment of ' || $2 || ' Rwf for your registered product: ' || $3)`,
         [farmerId, farmerAmount.toFixed(2), produceName]
       );
 
@@ -632,7 +559,7 @@ exports.registerProduct = async (req, res) => {
     });
 
     res.status(201).json({
-      message: "✅ Product registered and payment processed successfully.",
+      message: "✅ Product registered and payment Initiated successfully.",
       data: result,
     });
   } catch (error) {
@@ -1061,7 +988,7 @@ exports.processPayout = async (req, res) => {
     await db.query(
       `INSERT INTO notifications (user_id, type, title, message)
        VALUES ($1, 'PAYOUT', 'Payment Sent', 
-       'Your payment of $' || $2 || ' has been processed.')`,
+       'Your payment of ' || $2 || ' RWF has been processed. Done!')`,
       [payout.farmer_id, payout.amount]
     );
 

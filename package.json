@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "lucide-react": "^0.546.0",
+    "react-to-print": "^3.2.0",
     "react-toastify": "^11.0.5"
   }
 }

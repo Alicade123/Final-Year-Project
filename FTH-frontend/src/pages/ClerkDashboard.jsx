@@ -21,14 +21,18 @@ import {
   AlertCircle,
   Menu,
   X,
+  Copy,
   Send,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { clerkAPI } from "../services/api";
 import { useAPI, useAPICall } from "../hooks/useAPI";
-import { ProductModal } from "../components/ProductModel";
+import ProductModal from "../components/ProductModal";
 import UserModal from "../components/UserModel";
+import { Link } from "react-router-dom";
+import { ProductReceipt } from "../components/ProductReceipt";
 const menuItems = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "farmers", label: "Farmers", icon: Users },
@@ -61,7 +65,7 @@ export default function ClerkDashboard() {
               <Package className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="font-bold text-xl">Farmers Hub</h1>
+              <h1 className="font-bold text-xl">Hub Dashboard</h1>
               <p className="text-emerald-300 text-xs">Collection Center</p>
             </div>
           </div>
@@ -299,7 +303,7 @@ function Overview() {
     },
     {
       label: "Revenue (Monthly)",
-      value: `$${stats?.revenue?.toLocaleString() || 0}`,
+      value: `${stats?.revenue?.toLocaleString() || 0} Rwf`,
       change: "+15%",
       icon: DollarSign,
       color: "purple",
@@ -391,11 +395,12 @@ function Overview() {
           <div className="space-y-3">
             <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-xl p-3 text-left font-medium transition-all flex items-center gap-3">
               <Plus size={18} />
-              Add New Farmer
+
+              <Link> Add New Farmer</Link>
             </button>
             <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-xl p-3 text-left font-medium transition-all flex items-center gap-3">
               <Package size={18} />
-              Register Product
+              <Link>Register Product</Link>
             </button>
           </div>
         </div>
@@ -930,14 +935,168 @@ function Farmers() {
 //   );
 // }
 
+// export function Products() {
+//   const [productsData, setProductsData] = useState({ products: [], total: 0 });
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [editProduct, setEditProduct] = useState(null);
+//   const [page, setPage] = useState(1);
+//   const limit = 12; // products per page
+
+//   const loadProducts = async (page = 1) => {
+//     setLoading(true);
+//     try {
+//       const data = await clerkAPI.getProducts("AVAILABLE", page, limit);
+//       setProductsData(data);
+//     } catch (err) {
+//       setError(err.message || "Failed to fetch products");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     loadProducts(page);
+//   }, [page]);
+
+//   const handleModalSuccess = () => {
+//     setIsModalOpen(false);
+//     setEditProduct(null);
+//     loadProducts(page);
+//   };
+
+//   if (loading) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} />;
+
+//   const totalPages = Math.ceil(productsData.total / limit);
+
+//   return (
+//     <div className="space-y-6">
+//       {/* Header */}
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">
+//             Products Inventory
+//           </h3>
+//           <p className="text-neutral-500">
+//             Total: {productsData.total} products
+//           </p>
+//         </div>
+//         <button
+//           onClick={() => {
+//             setEditProduct(null);
+//             setIsModalOpen(true);
+//           }}
+//           className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+//         >
+//           <Plus size={18} /> Add Product
+//         </button>
+//       </div>
+
+//       {/* Products Grid */}
+//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+//         {productsData.products.map((product) => (
+//           <div
+//             key={product.id}
+//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow"
+//           >
+//             {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
+//               🌾
+//             </div> */}
+//             {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50  p-3 flex items-center justify-center">
+//               <img
+//                 src="/sample.jpg" // assuming your image is public/sample.png
+//                 alt="Product"
+//                 className="w-44 h-24 object-contain"
+//               />
+//             </div> */}
+//             <div className="p-6">
+//               <div className="flex items-start justify-between mb-3">
+//                 <h4 className="font-bold text-xl text-neutral-800">
+//                   {product.produce_name}
+//                 </h4>
+//                 <span
+//                   className={`text-xs font-semibold px-2 py-1 rounded-full ${
+//                     product.status === "AVAILABLE"
+//                       ? "bg-emerald-100 text-emerald-700"
+//                       : "bg-amber-100 text-amber-700"
+//                   }`}
+//                 >
+//                   {product.status}
+//                 </span>
+//               </div>
+//               <p className="text-neutral-600 mb-2">
+//                 {product.quantity} {product.unit} available
+//               </p>
+//               <p className="text-emerald-600 font-bold text-lg mb-4">
+//                 {product.price_per_unit} Rwf/{product.unit}
+//               </p>
+//               <p className="text-sm text-neutral-500 mb-4">
+//                 Farmer: {product.farmer_name}
+//               </p>
+//               <div className="flex gap-2">
+//                 <button
+//                   onClick={() => {
+//                     setEditProduct(product);
+//                     setIsModalOpen(true);
+//                   }}
+//                   className="flex-1 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors"
+//                 >
+//                   Edit
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+
+//       {/* Pagination */}
+//       {totalPages > 1 && (
+//         <div className="flex justify-center items-center gap-2 mt-6">
+//           <button
+//             onClick={() => setPage((p) => Math.max(p - 1, 1))}
+//             disabled={page === 1}
+//             className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+//           >
+//             Previous
+//           </button>
+//           <span>
+//             Page {page} of {totalPages}
+//           </span>
+//           <button
+//             onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+//             disabled={page === totalPages}
+//             className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+//           >
+//             Next
+//           </button>
+//         </div>
+//       )}
+
+//       {/* Product Modal */}
+//       <ProductModal
+//         isOpen={isModalOpen}
+//         onClose={() => {
+//           setIsModalOpen(false);
+//           setEditProduct(null);
+//         }}
+//         onSuccess={handleModalSuccess}
+//         editProduct={editProduct}
+//       />
+//     </div>
+//   );
+// }
+
 export function Products() {
   const [productsData, setProductsData] = useState({ products: [], total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
+  const [viewProduct, setViewProduct] = useState(null);
   const [page, setPage] = useState(1);
-  const limit = 12; // products per page
+  const limit = 12;
 
   const loadProducts = async (page = 1) => {
     setLoading(true);
@@ -958,6 +1117,7 @@ export function Products() {
   const handleModalSuccess = () => {
     setIsModalOpen(false);
     setEditProduct(null);
+    setViewProduct(null);
     loadProducts(page);
   };
 
@@ -981,6 +1141,7 @@ export function Products() {
         <button
           onClick={() => {
             setEditProduct(null);
+            setViewProduct(null);
             setIsModalOpen(true);
           }}
           className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
@@ -989,23 +1150,13 @@ export function Products() {
         </button>
       </div>
 
-      {/* Products Grid */}
+      {/* Product Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {productsData.products.map((product) => (
           <div
             key={product.id}
             className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow"
           >
-            {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
-              🌾
-            </div> */}
-            {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50  p-3 flex items-center justify-center">
-              <img
-                src="/sample.jpg" // assuming your image is public/sample.png
-                alt="Product"
-                className="w-44 h-24 object-contain"
-              />
-            </div> */}
             <div className="p-6">
               <div className="flex items-start justify-between mb-3">
                 <h4 className="font-bold text-xl text-neutral-800">
@@ -1025,7 +1176,7 @@ export function Products() {
                 {product.quantity} {product.unit} available
               </p>
               <p className="text-emerald-600 font-bold text-lg mb-4">
-                ${product.price_per_unit}/{product.unit}
+                {product.price_per_unit} Rwf/{product.unit}
               </p>
               <p className="text-sm text-neutral-500 mb-4">
                 Farmer: {product.farmer_name}
@@ -1034,11 +1185,22 @@ export function Products() {
                 <button
                   onClick={() => {
                     setEditProduct(product);
+                    setViewProduct(null);
                     setIsModalOpen(true);
                   }}
                   className="flex-1 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors"
                 >
                   Edit
+                </button>
+                <button
+                  onClick={() => {
+                    setViewProduct(product);
+                    setEditProduct(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="flex-1 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
+                >
+                  <Eye size={16} /> Receipt
                 </button>
               </div>
             </div>
@@ -1075,9 +1237,11 @@ export function Products() {
         onClose={() => {
           setIsModalOpen(false);
           setEditProduct(null);
+          setViewProduct(null);
         }}
         onSuccess={handleModalSuccess}
         editProduct={editProduct}
+        viewProduct={viewProduct} // 👈 new prop
       />
     </div>
   );
@@ -1212,7 +1376,8 @@ function Orders() {
           {selectedOrder.buyer_phone}
         </p>
         <p className="text-neutral-600">
-          Hub: {selectedOrder.hub_name} ({selectedOrder.hub_location})
+          Hub: {selectedOrder.name || "Ruhango FTH"} (
+          {selectedOrder.hub_location || "South Province"})
         </p>
         <p>Status: {selectedOrder.status}</p>
         <p>Created at: {new Date(selectedOrder.created_at).toLocaleString()}</p>
@@ -1223,14 +1388,14 @@ function Orders() {
               <span>
                 {item.produce_name} × {item.quantity} {item.unit}
               </span>
-              <span>${(item.unit_price * item.quantity).toFixed(2)}</span>
+              <span>{(item.unit_price * item.quantity).toFixed(2)} Rwf</span>
             </div>
           ))}
         </div>
-
+        <hr />
         <div className="flex justify-between font-bold text-lg">
           <span>Total</span>
-          <span>${selectedOrder.total_amount}</span>
+          <span>{selectedOrder.total_amount} Rwf</span>
         </div>
 
         <div className="flex gap-4 mt-4">
@@ -1244,7 +1409,7 @@ function Orders() {
           )}
           <button
             onClick={() => setMode("LIST")}
-            className="px-4 py-2 border rounded-xl"
+            className="px-4 py-2 border rounded-xl hover:cursor-pointer hover:bg-red-700 hover:border-none hover:text-white"
           >
             Back
           </button>
@@ -1318,7 +1483,7 @@ function Orders() {
                 <div className="text-right">
                   <p className="text-sm text-neutral-500">Amount</p>
                   <p className="text-2xl font-bold text-emerald-600">
-                    ${order.total_amount}
+                    {order.total_amount} Rwf
                   </p>
                 </div>
                 <button
@@ -1426,6 +1591,46 @@ export function Payouts() {
   const [providerRef, setProviderRef] = useState("");
   const [processing, setProcessing] = useState(false);
 
+  function generateProviderRef(method) {
+    const number = Math.floor(100000000 + Math.random() * 900000000);
+    const letters = Array.from({ length: 3 }, () =>
+      String.fromCharCode(65 + Math.floor(Math.random() * 26))
+    ).join("");
+    return `${method}:${number}-${letters}`;
+  }
+
+  function ProviderRefDisplay({ providerRef, setProviderRef }) {
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+      if (!providerRef) {
+        const generated = generateProviderRef("MM");
+        setProviderRef(generated);
+      }
+    }, [providerRef, setProviderRef]);
+
+    const handleCopy = () => {
+      navigator.clipboard.writeText(providerRef);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+      <p className="flex items-center gap-2 mb-2">
+        <span>ProviderRef:</span>
+        <span className="font-bold select-text">{providerRef}</span>
+        <button
+          onClick={handleCopy}
+          aria-label="Copy ProviderRef"
+          className="hover:text-blue-600 transition-colors"
+        >
+          <Copy size={14} />
+        </button>
+        {copied && <span className="text-green-600 text-sm">Copied!</span>}
+      </p>
+    );
+  }
+
   const handleProcess = async () => {
     if (!selectedPayout || !providerRef) {
       toast.error("Please enter a provider reference number");
@@ -1499,8 +1704,8 @@ export function Payouts() {
                   <td className="px-6 py-4 text-neutral-600">
                     {payout.farmer_phone}
                   </td>
-                  <td className="px-6 py-4 font-bold text-emerald-600">
-                    ${payout.amount}
+                  <td className="px-6 py-4 font-bold text-black">
+                    {payout.amount} Rwf
                   </td>
                   <td className="px-6 py-4 text-neutral-600">
                     {new Date(payout.payment_date).toLocaleDateString()}
@@ -1550,9 +1755,12 @@ export function Payouts() {
               <span className="font-semibold">
                 {selectedPayout.farmer_name}
               </span>
-              ’s payout of ${selectedPayout.amount}.
+              ’s payout of {selectedPayout.amount} Rwf.
             </p>
-
+            <ProviderRefDisplay
+              providerRef={providerRef}
+              setProviderRef={setProviderRef}
+            />
             <input
               type="text"
               value={providerRef}
@@ -1571,7 +1779,7 @@ export function Payouts() {
               <button
                 onClick={handleProcess}
                 disabled={processing}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-green-600 to-indigo-600 text-white font-semibold shadow hover:shadow-lg transition disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-green-700 text-white font-semibold shadow hover:shadow-lg transition disabled:opacity-50"
               >
                 {processing ? "Processing..." : "Confirm"}
               </button>
@@ -1818,7 +2026,7 @@ function SettingsTab() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                Hub Name
+                Hub Name:
               </label>
               <input
                 type="text"
@@ -1826,13 +2034,13 @@ function SettingsTab() {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full border font-bold border-neutral-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 readOnly
               />
             </div>
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                Location
+                Location:
               </label>
               <input
                 type="text"
@@ -1840,7 +2048,7 @@ function SettingsTab() {
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
-                className="w-full border border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full font-bold border border-neutral-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 readOnly
               />
             </div>
@@ -1857,20 +2065,20 @@ function SettingsTab() {
 
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl shadow-lg p-6 text-white">
-            <h4 className="text-lg font-bold mb-4">Hub Status</h4>
+            <h4 className="text-lg font-bold mb-4">Hub Information</h4>
             <div className="space-y-3">
-              <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-emerald-100">Manager</span>
+              <div className="block items-center justify-between pb-3 border-b border-white/20">
+                <span className="text-emerald-100">Manager Name</span> <br />
                 <span className="font-bold">{hubData?.manager_name}</span>
               </div>
-              <div className="flex items-center justify-between pb-3 border-b border-white/20">
-                <span className="text-emerald-100">Email</span>
+              <div className="block items-center justify-between pb-3 border-b border-white/20">
+                <span className="text-emerald-100">Email</span> <br />
                 <span className="font-bold text-sm">
                   {hubData?.manager_email}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-emerald-100">Phone</span>
+              <div className="block items-center justify-between">
+                <span className="text-emerald-100">Phone</span> <br />
                 <span className="font-bold">{hubData?.manager_phone}</span>
               </div>
             </div>
