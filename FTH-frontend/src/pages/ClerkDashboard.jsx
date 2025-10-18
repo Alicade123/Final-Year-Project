@@ -25,14 +25,23 @@ import {
   Send,
   Loader2,
   Eye,
+  Calendar,
+  Download,
+  User,
+  FileDown,
 } from "lucide-react";
+
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
+
 import { toast } from "react-toastify";
 import { clerkAPI } from "../services/api";
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import ProductModal from "../components/ProductModal";
 import UserModal from "../components/UserModel";
 import { Link } from "react-router-dom";
-import { ProductReceipt } from "../components/ProductReceipt";
+
 const menuItems = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "farmers", label: "Farmers", icon: Users },
@@ -227,7 +236,7 @@ export default function ClerkDashboard() {
           {active === "products" && <Products />}
           {active === "orders" && <Orders />}
           {active === "payouts" && <Payouts />}
-          {active === "reports" && <Reports />}
+          {active === "reports" && <ReportsDashboard />}
           {active === "notifications" && <Notifications />}
           {active === "settings" && <SettingsTab />}
         </section>
@@ -409,132 +418,7 @@ function Overview() {
   );
 }
 
-// // // Farmers Component with API Integration
-// function Farmers() {
-//   const [page, setPage] = useState(1);
-//   const { data, loading, error, refetch } = useAPI(
-//     () => clerkAPI.getFarmers(page, 20),
-//     [page]
-//   );
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-
-//   if (loading) return <LoadingSpinner />;
-//   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
-
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div>
-//           <h3 className="text-2xl font-bold text-neutral-800">
-//             Registered Farmers
-//           </h3>
-//           <p className="text-neutral-500">Total: {data?.total || 0} farmers</p>
-//         </div>
-//         <button className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
-//           <Plus size={18} />
-//           Add Farmer
-//         </button>
-//       </div>
-
-//       <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden">
-//         <div className="overflow-x-auto">
-//           <table className="w-full">
-//             <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
-//               <tr>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Name
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Phone
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Location
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Deliveries
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Status
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Actions
-//                 </th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {data?.farmers?.map((farmer, i) => (
-//                 <tr
-//                   key={i}
-//                   className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors"
-//                 >
-//                   <td className="px-6 py-4 font-medium text-neutral-800">
-//                     {farmer.full_name}
-//                   </td>
-//                   <td className="px-6 py-4 text-neutral-600">{farmer.phone}</td>
-//                   <td className="px-6 py-4 text-neutral-600">
-//                     {farmer.location || "N/A"}
-//                   </td>
-//                   <td className="px-6 py-4 text-neutral-600">
-//                     {farmer.total_deliveries || 0}
-//                   </td>
-//                   <td className="px-6 py-4">
-//                     <span
-//                       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-//                         farmer.is_active
-//                           ? "bg-emerald-100 text-emerald-700"
-//                           : "bg-neutral-100 text-neutral-700"
-//                       }`}
-//                     >
-//                       {farmer.is_active ? (
-//                         <CheckCircle size={12} />
-//                       ) : (
-//                         <Clock size={12} />
-//                       )}
-//                       {farmer.is_active ? "Active" : "Inactive"}
-//                     </span>
-//                   </td>
-//                   <td className="px-6 py-4">
-//                     <div className="flex items-center gap-2">
-//                       <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors">
-//                         <Edit size={16} className="text-blue-600" />
-//                       </button>
-//                       <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
-//                         <Trash2 size={16} className="text-red-600" />
-//                       </button>
-//                     </div>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//         </div>
-//       </div>
-
-//       {/* Pagination */}
-//       {data?.total > 20 && (
-//         <div className="flex items-center justify-center gap-2">
-//           <button
-//             onClick={() => setPage((p) => Math.max(1, p - 1))}
-//             disabled={page === 1}
-//             className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
-//           >
-//             Previous
-//           </button>
-//           <span className="px-4 py-2">
-//             Page {page} of {Math.ceil(data.total / 20)}
-//           </span>
-//           <button
-//             onClick={() => setPage((p) => p + 1)}
-//             disabled={page >= Math.ceil(data.total / 20)}
-//             className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
-//           >
-//             Next
-//           </button>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
+// Farmers Component with API Integration
 function Farmers() {
   const [page, setPage] = useState(1);
   const { data, loading, error, execute } = useAPI(
@@ -761,332 +645,6 @@ function Farmers() {
 }
 
 // Products, Orders, Payouts, Reports, Notifications, Settings components
-// These follow the same pattern - I'll create shortened versions
-
-// function Products() {
-//   const { data, loading, error, execute } = useAPI(() =>
-//     clerkAPI.getProducts()
-//   );
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [editProduct, setEditProduct] = useState(null);
-//   const [deleteProduct, setDeleteProduct] = useState(null);
-//   const [deleting, setDeleting] = useState(false);
-//   const [deleteError, setDeleteError] = useState("");
-
-//   if (loading) return <LoadingSpinner />;
-//   if (error) return <ErrorMessage message={error} />;
-
-//   const handleSuccess = async () => {
-//     setIsModalOpen(false);
-//     setEditProduct(null);
-//   };
-
-//   const handleDelete = async () => {
-//     if (!deleteProduct) return;
-
-//     try {
-//       setDeleting(true);
-//       setDeleteError("");
-
-//       await fetch(`/api/clerk/products/${deleteProduct.id}`, {
-//         method: "DELETE",
-//       }).then(async (res) => {
-//         if (!res.ok) {
-//           const data = await res.json();
-//           throw new Error(data.error || "Failed to delete product");
-//         }
-//       });
-
-//       // Reset delete state and refresh list
-//       setDeleteProduct(null);
-//       await execute();
-//     } catch (err) {
-//       setDeleteError(err.message || "Failed to delete product");
-//     } finally {
-//       setDeleting(false);
-//     }
-//   };
-
-//   return (
-//     <div className="space-y-6">
-//       {/* Header */}
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div>
-//           <h3 className="text-2xl font-bold text-neutral-800">
-//             Products Inventory
-//           </h3>
-//           <p className="text-neutral-500">Total: {data?.total || 0} products</p>
-//         </div>
-//         <button
-//           onClick={() => {
-//             setEditProduct(null);
-//             setIsModalOpen(true);
-//           }}
-//           className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-//         >
-//           <Plus size={18} /> Add Product
-//         </button>
-//       </div>
-
-//       {/* Products Grid */}
-//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//         {data?.products?.map((product, i) => (
-//           <div
-//             key={i}
-//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow"
-//           >
-//             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
-//               🌾
-//             </div>
-//             <div className="p-6">
-//               <div className="flex items-start justify-between mb-3">
-//                 <h4 className="font-bold text-xl text-neutral-800">
-//                   {product.produce_name}
-//                 </h4>
-//                 <span
-//                   className={`text-xs font-semibold px-2 py-1 rounded-full ${
-//                     product.status === "AVAILABLE"
-//                       ? "bg-emerald-100 text-emerald-700"
-//                       : "bg-amber-100 text-amber-700"
-//                   }`}
-//                 >
-//                   {product.status}
-//                 </span>
-//               </div>
-//               <p className="text-neutral-600 mb-2">
-//                 {product.quantity} {product.unit} available
-//               </p>
-//               <p className="text-emerald-600 font-bold text-lg mb-4">
-//                 ${product.price_per_unit}/{product.unit}
-//               </p>
-//               <p className="text-sm text-neutral-500 mb-4">
-//                 Farmer: {product.farmer_name}
-//               </p>
-
-//               <div className="flex gap-2">
-//                 {/* Edit Button */}
-//                 <button
-//                   onClick={() => {
-//                     setEditProduct(product);
-//                     setIsModalOpen(true);
-//                   }}
-//                   className="flex-1 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors"
-//                 >
-//                   Edit
-//                 </button>
-
-//                 {/* Delete Button */}
-//                 <button
-//                   onClick={() => setDeleteProduct(product)}
-//                   className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-//                 >
-//                   <Trash2 size={18} />
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-
-//       {/* Delete Confirmation Modal */}
-//       {deleteProduct && (
-//         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-//           <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-//             <h3 className="text-lg font-bold text-neutral-800 mb-4">
-//               Confirm Deletion
-//             </h3>
-//             <p className="text-neutral-600 mb-4">
-//               Are you sure you want to delete{" "}
-//               <strong>{deleteProduct.produce_name}</strong>?
-//             </p>
-//             {deleteError && (
-//               <p className="text-red-500 text-sm mb-2">{deleteError}</p>
-//             )}
-//             <div className="flex gap-2">
-//               <button
-//                 onClick={() => setDeleteProduct(null)}
-//                 className="flex-1 px-4 py-2 border rounded-lg"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 onClick={handleDelete}
-//                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg"
-//                 disabled={deleting}
-//               >
-//                 {deleting ? "Deleting..." : "Delete"}
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Product Modal */}
-//       <ProductModal
-//         isOpen={isModalOpen}
-//         onClose={() => {
-//           setIsModalOpen(false);
-//           setEditProduct(null);
-//         }}
-//         onSuccess={handleSuccess}
-//         editProduct={editProduct}
-//       />
-//     </div>
-//   );
-// }
-
-// export function Products() {
-//   const [productsData, setProductsData] = useState({ products: [], total: 0 });
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [editProduct, setEditProduct] = useState(null);
-//   const [page, setPage] = useState(1);
-//   const limit = 12; // products per page
-
-//   const loadProducts = async (page = 1) => {
-//     setLoading(true);
-//     try {
-//       const data = await clerkAPI.getProducts("AVAILABLE", page, limit);
-//       setProductsData(data);
-//     } catch (err) {
-//       setError(err.message || "Failed to fetch products");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     loadProducts(page);
-//   }, [page]);
-
-//   const handleModalSuccess = () => {
-//     setIsModalOpen(false);
-//     setEditProduct(null);
-//     loadProducts(page);
-//   };
-
-//   if (loading) return <LoadingSpinner />;
-//   if (error) return <ErrorMessage message={error} />;
-
-//   const totalPages = Math.ceil(productsData.total / limit);
-
-//   return (
-//     <div className="space-y-6">
-//       {/* Header */}
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div>
-//           <h3 className="text-2xl font-bold text-neutral-800">
-//             Products Inventory
-//           </h3>
-//           <p className="text-neutral-500">
-//             Total: {productsData.total} products
-//           </p>
-//         </div>
-//         <button
-//           onClick={() => {
-//             setEditProduct(null);
-//             setIsModalOpen(true);
-//           }}
-//           className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-//         >
-//           <Plus size={18} /> Add Product
-//         </button>
-//       </div>
-
-//       {/* Products Grid */}
-//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//         {productsData.products.map((product) => (
-//           <div
-//             key={product.id}
-//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden hover:shadow-xl transition-shadow"
-//           >
-//             {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 flex items-center justify-center text-6xl">
-//               🌾
-//             </div> */}
-//             {/* <div className="bg-gradient-to-br from-emerald-50 to-teal-50  p-3 flex items-center justify-center">
-//               <img
-//                 src="/sample.jpg" // assuming your image is public/sample.png
-//                 alt="Product"
-//                 className="w-44 h-24 object-contain"
-//               />
-//             </div> */}
-//             <div className="p-6">
-//               <div className="flex items-start justify-between mb-3">
-//                 <h4 className="font-bold text-xl text-neutral-800">
-//                   {product.produce_name}
-//                 </h4>
-//                 <span
-//                   className={`text-xs font-semibold px-2 py-1 rounded-full ${
-//                     product.status === "AVAILABLE"
-//                       ? "bg-emerald-100 text-emerald-700"
-//                       : "bg-amber-100 text-amber-700"
-//                   }`}
-//                 >
-//                   {product.status}
-//                 </span>
-//               </div>
-//               <p className="text-neutral-600 mb-2">
-//                 {product.quantity} {product.unit} available
-//               </p>
-//               <p className="text-emerald-600 font-bold text-lg mb-4">
-//                 {product.price_per_unit} Rwf/{product.unit}
-//               </p>
-//               <p className="text-sm text-neutral-500 mb-4">
-//                 Farmer: {product.farmer_name}
-//               </p>
-//               <div className="flex gap-2">
-//                 <button
-//                   onClick={() => {
-//                     setEditProduct(product);
-//                     setIsModalOpen(true);
-//                   }}
-//                   className="flex-1 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors"
-//                 >
-//                   Edit
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-
-//       {/* Pagination */}
-//       {totalPages > 1 && (
-//         <div className="flex justify-center items-center gap-2 mt-6">
-//           <button
-//             onClick={() => setPage((p) => Math.max(p - 1, 1))}
-//             disabled={page === 1}
-//             className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-//           >
-//             Previous
-//           </button>
-//           <span>
-//             Page {page} of {totalPages}
-//           </span>
-//           <button
-//             onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-//             disabled={page === totalPages}
-//             className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-//           >
-//             Next
-//           </button>
-//         </div>
-//       )}
-
-//       {/* Product Modal */}
-//       <ProductModal
-//         isOpen={isModalOpen}
-//         onClose={() => {
-//           setIsModalOpen(false);
-//           setEditProduct(null);
-//         }}
-//         onSuccess={handleModalSuccess}
-//         editProduct={editProduct}
-//       />
-//     </div>
-//   );
-// }
 
 export function Products() {
   const [productsData, setProductsData] = useState({ products: [], total: 0 });
@@ -1247,91 +805,7 @@ export function Products() {
   );
 }
 
-// function Orders() {
-//   const [statusFilter, setStatusFilter] = useState("");
-//   const { data, loading, error } = useAPI(
-//     () => clerkAPI.getOrders(statusFilter),
-//     [statusFilter]
-//   );
-
-//   if (loading) return <LoadingSpinner />;
-//   if (error) return <ErrorMessage message={error} />;
-
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div>
-//           <h3 className="text-2xl font-bold text-neutral-800">
-//             Order Management
-//           </h3>
-//           <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
-//         </div>
-//         <select
-//           value={statusFilter}
-//           onChange={(e) => setStatusFilter(e.target.value)}
-//           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-//         >
-//           <option value="">All Orders</option>
-//           <option value="PENDING">Pending</option>
-//           <option value="PAID">Paid</option>
-//           <option value="FULFILLED">Fulfilled</option>
-//           <option value="CANCELLED">Cancelled</option>
-//         </select>
-//       </div>
-
-//       <div className="space-y-4">
-//         {data?.orders?.map((order, i) => (
-//           <div
-//             key={i}
-//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow"
-//           >
-//             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-//               <div className="flex-1">
-//                 <div className="flex items-center gap-3 mb-2">
-//                   <span className="font-bold text-lg text-neutral-800">
-//                     #{order.id.substring(0, 8)}
-//                   </span>
-//                   <span
-//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
-//                       order.status === "FULFILLED"
-//                         ? "bg-emerald-100 text-emerald-700"
-//                         : order.status === "PENDING"
-//                         ? "bg-amber-100 text-amber-700"
-//                         : order.status === "PAID"
-//                         ? "bg-blue-100 text-blue-700"
-//                         : "bg-red-100 text-red-700"
-//                     }`}
-//                   >
-//                     {order.status}
-//                   </span>
-//                 </div>
-//                 <p className="text-neutral-600 mb-1">
-//                   <span className="font-semibold">{order.buyer_name}</span> •{" "}
-//                   {order.buyer_phone}
-//                 </p>
-//                 <p className="text-sm text-neutral-500">
-//                   {new Date(order.created_at).toLocaleDateString()} •{" "}
-//                   {order.items?.length || 0} items
-//                 </p>
-//               </div>
-//               <div className="flex items-center gap-4">
-//                 <div className="text-right">
-//                   <p className="text-sm text-neutral-500">Amount</p>
-//                   <p className="text-2xl font-bold text-emerald-600">
-//                     ${order.total_amount}
-//                   </p>
-//                 </div>
-//                 <button className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-colors">
-//                   View Details
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
+//orders
 function Orders() {
   const [statusFilter, setStatusFilter] = useState("");
   const [mode, setMode] = useState("LIST"); // LIST | DETAILS
@@ -1501,88 +975,7 @@ function Orders() {
   );
 }
 
-// function Payouts() {
-//   const { data, loading, error } = useAPI(() => clerkAPI.getPayouts());
-
-//   if (loading) return <LoadingSpinner />;
-//   if (error) return <ErrorMessage message={error} />;
-
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div>
-//           <h3 className="text-2xl font-bold text-neutral-800">
-//             Farmer Payouts
-//           </h3>
-//           <p className="text-neutral-500">Total: {data?.total || 0} payouts</p>
-//         </div>
-//       </div>
-
-//       <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden">
-//         <div className="overflow-x-auto">
-//           <table className="w-full">
-//             <thead className="bg-gradient-to-r from-purple-50 to-pink-50">
-//               <tr>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Farmer
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Phone
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Amount
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Date
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-sm font-bold text-neutral-700">
-//                   Status
-//                 </th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {data?.payouts?.map((payout, i) => (
-//                 <tr
-//                   key={i}
-//                   className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors"
-//                 >
-//                   <td className="px-6 py-4 font-medium text-neutral-800">
-//                     {payout.farmer_name}
-//                   </td>
-//                   <td className="px-6 py-4 text-neutral-600">
-//                     {payout.farmer_phone}
-//                   </td>
-//                   <td className="px-6 py-4 font-bold text-emerald-600">
-//                     ${payout.amount}
-//                   </td>
-//                   <td className="px-6 py-4 text-neutral-600">
-//                     {new Date(payout.payment_date).toLocaleDateString()}
-//                   </td>
-//                   <td className="px-6 py-4">
-//                     <span
-//                       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-//                         payout.status === "SENT"
-//                           ? "bg-emerald-100 text-emerald-700"
-//                           : "bg-amber-100 text-amber-700"
-//                       }`}
-//                     >
-//                       {payout.status === "SENT" ? (
-//                         <CheckCircle size={12} />
-//                       ) : (
-//                         <Clock size={12} />
-//                       )}
-//                       {payout.status}
-//                     </span>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
+//payout
 
 export function Payouts() {
   const { data, loading, error, refetch } = useAPI(() => clerkAPI.getPayouts());
@@ -1790,120 +1183,364 @@ export function Payouts() {
     </div>
   );
 }
-function Reports() {
-  const [reportType, setReportType] = useState("");
-  const { data, loading, error } = useAPI(
-    () => clerkAPI.getReports(null, null, reportType),
-    [reportType]
-  );
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error} />;
+//Report
+
+export function ReportsDashboard() {
+  const [activeTab, setActiveTab] = useState("revenue");
+  const [data, setData] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const tabs = [
+    { id: "revenue", label: "Revenue Report", icon: <DollarSign size={16} /> },
+    { id: "sales", label: "Sales Report", icon: <Package size={16} /> },
+    { id: "farmers", label: "Farmer Report", icon: <User size={16} /> },
+  ];
+
+  // ✅ Fetch reports
+  const fetchReports = async () => {
+    setLoading(true);
+    try {
+      const res = await clerkAPI.getReports(startDate, endDate, activeTab);
+      console.log("📊 Report response:", res.data);
+      // setData(res.data?.data?.[activeTab] || []);
+      setData(res.data?.[activeTab] || []);
+    } catch (err) {
+      console.error("Report fetch error:", err);
+      alert("⚠️ Failed to load report data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, [activeTab]);
+
+  // ✅ Totals calculator
+  const getTotals = (data, type) => {
+    if (!data || data.length === 0) return [];
+    if (type === "revenue") {
+      const totalHubRevenue = data.reduce(
+        (s, r) => s + Number(r.hub_revenue || 0),
+        0
+      );
+      const totalFarmerAmount = data.reduce(
+        (s, r) => s + Number(r.farmer_amount || 0),
+        0
+      );
+      const totalTransactions = data.reduce(
+        (s, r) => s + Number(r.transaction_count || 0),
+        0
+      );
+      return [
+        {
+          label: "Total Hub Revenue",
+          value: `${totalHubRevenue.toLocaleString()} Rwf`,
+        },
+        {
+          label: "Total Farmer Amount",
+          value: `${totalFarmerAmount.toLocaleString()} Rwf`,
+        },
+        { label: "Total Transactions", value: totalTransactions },
+      ];
+    }
+    if (type === "sales") {
+      const totalRevenue = data.reduce(
+        (s, r) => s + Number(r.total_revenue || 0),
+        0
+      );
+      const totalOrders = data.reduce(
+        (s, r) => s + Number(r.order_count || 0),
+        0
+      );
+      return [
+        {
+          label: "Total Sales Revenue",
+          value: `${totalRevenue.toLocaleString()} Rwf`,
+        },
+        { label: "Orders Processed", value: totalOrders },
+      ];
+    }
+    if (type === "farmers") {
+      const totalEarned = data.reduce(
+        (s, r) => s + Number(r.total_earned || 0),
+        0
+      );
+      return [
+        {
+          label: "Total Paid to Farmers",
+          value: `${totalEarned.toLocaleString()} Rwf`,
+        },
+      ];
+    }
+    return [];
+  };
+
+  const totals = getTotals(data, activeTab);
+
+  // ✅ Export functions
+  const handleExport = (format) => {
+    if (!data || data.length === 0) return alert("No data to export");
+
+    try {
+      if (format === "csv") {
+        const headers = Object.keys(data[0]);
+        const csvRows = [
+          headers.join(","), // header row
+          ...data.map((row) =>
+            headers.map((field) => JSON.stringify(row[field] ?? "")).join(",")
+          ),
+        ];
+        const csvContent = csvRows.join("\n");
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${activeTab}_report.csv`;
+        link.click();
+      } else if (format === "xlsx") {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Report");
+        XLSX.writeFile(wb, `${activeTab}_report.xlsx`);
+      } else if (format === "pdf") {
+        const element = document.getElementById("report-content");
+        if (!element) return alert("⚠️ Report not ready for PDF export");
+        html2canvas(element, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          foreignObjectRendering: true,
+        }).then((canvas) => {
+          const imgData = canvas.toDataURL("image/png");
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`${activeTab}_report.pdf`);
+        });
+      }
+    } catch (err) {
+      console.error("Export error:", err);
+      alert("⚠️ Export failed. Please try again.");
+    }
+  };
+
+  // ✅ Simple manual button component
+  const CustomButton = ({ children, onClick, color }) => (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 rounded-md text-white font-medium flex items-center gap-2 transition-all ${
+        color === "green"
+          ? "bg-emerald-600 hover:bg-emerald-700"
+          : color === "blue"
+          ? "bg-blue-600 hover:bg-blue-700"
+          : "bg-amber-500 hover:bg-amber-600"
+      }`}
+    >
+      {children}
+    </button>
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-bold text-neutral-800">
-            Reports & Analytics
-          </h3>
-          <p className="text-neutral-500">
-            Hub: {data?.hubName || "Loading..."}
-          </p>
-        </div>
-        <button className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
-          <BarChart3 size={18} />
-          Export Report
-        </button>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8 text-center hover:shadow-xl transition-shadow">
-          <BarChart3 className="mx-auto text-emerald-600 mb-4" size={48} />
-          <h4 className="text-xl font-bold text-neutral-800 mb-2">
-            Monthly Revenue
-          </h4>
-          <p className="text-neutral-600 mb-4">
-            Detailed breakdown of earnings
-          </p>
-          <button
-            onClick={() => setReportType("revenue")}
-            className="bg-emerald-50 text-emerald-700 px-6 py-2 rounded-lg font-semibold hover:bg-emerald-100 transition-colors"
-          >
-            View Report
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8 text-center hover:shadow-xl transition-shadow">
-          <TrendingUp className="mx-auto text-blue-600 mb-4" size={48} />
-          <h4 className="text-xl font-bold text-neutral-800 mb-2">
-            Sales Trends
-          </h4>
-          <p className="text-neutral-600 mb-4">Product performance analytics</p>
-          <button
-            onClick={() => setReportType("sales")}
-            className="bg-blue-50 text-blue-700 px-6 py-2 rounded-lg font-semibold hover:bg-blue-100 transition-colors"
-          >
-            View Report
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8 text-center hover:shadow-xl transition-shadow">
-          <Users className="mx-auto text-purple-600 mb-4" size={48} />
-          <h4 className="text-xl font-bold text-neutral-800 mb-2">
-            Farmer Activity
-          </h4>
-          <p className="text-neutral-600 mb-4">
-            Registration and delivery stats
-          </p>
-          <button
-            onClick={() => setReportType("farmers")}
-            className="bg-purple-50 text-purple-700 px-6 py-2 rounded-lg font-semibold hover:bg-purple-100 transition-colors"
-          >
-            View Report
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8 text-center hover:shadow-xl transition-shadow">
-          <Package className="mx-auto text-amber-600 mb-4" size={48} />
-          <h4 className="text-xl font-bold text-neutral-800 mb-2">
-            Inventory Report
-          </h4>
-          <p className="text-neutral-600 mb-4">Stock levels and turnover</p>
-          <button className="bg-amber-50 text-amber-700 px-6 py-2 rounded-lg font-semibold hover:bg-amber-100 transition-colors">
-            View Report
-          </button>
-        </div>
-      </div>
-
-      {/* Display report data if available */}
-      {data?.revenue && (
-        <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6">
-          <h4 className="text-xl font-bold text-neutral-800 mb-4">
-            Revenue Report
-          </h4>
-          <div className="space-y-3">
-            {data.revenue.map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg"
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex flex-wrap justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold text-emerald-700">
+          Reports Dashboard
+        </h1>
+        <div className="flex gap-2">
+          <div className="flex">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1 px-4 py-2 rounded-t-md transition-all ${
+                  activeTab === tab.id
+                    ? "bg-emerald-600 text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
               >
-                <span className="font-semibold">
-                  {new Date(item.month).toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
-                <span className="text-emerald-600 font-bold">
-                  ${item.hub_revenue}
-                </span>
-              </div>
+                {tab.icon}
+                {tab.label}
+              </button>
             ))}
           </div>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+          />
+          <CustomButton color="green" onClick={fetchReports}>
+            Apply
+          </CustomButton>
+          {/* Export buttons */}
+          <CustomButton color="green" onClick={() => handleExport("pdf")}>
+            <FileDown size={16} /> Export PDF
+          </CustomButton>
+          <CustomButton color="blue" onClick={() => handleExport("csv")}>
+            <FileDown size={16} /> Export CSV
+          </CustomButton>
+          <CustomButton color="amber" onClick={() => handleExport("xlsx")}>
+            <FileDown size={16} /> Export Excel
+          </CustomButton>
         </div>
-      )}
+      </div>
+
+      {/* Tabs
+      <div className=" flex flex-col-reverse flex-cols-2 ">
+        <div className="flex gap-2 mb-6 border-b">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1 px-4 py-2 rounded-t-md transition-all ${
+                activeTab === tab.id
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        
+      </div> */}
+
+      {/* Report content */}
+      <div
+        id="report-content"
+        className="bg-white rounded-xl shadow-md border border-gray-200 p-6"
+      >
+        {loading ? (
+          <p className="text-center text-gray-400">Loading...</p>
+        ) : (
+          <>
+            {/* Totals summary */}
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              {totals.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 shadow-sm"
+                >
+                  <p className="text-sm text-gray-600">{item.label}</p>
+                  <p className="text-xl font-semibold text-emerald-700 mt-1">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Table */}
+            {Array.isArray(data) && data.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full border text-sm">
+                  <thead className="bg-emerald-50">
+                    <tr>
+                      {Object.keys(data[0]).map((key) => (
+                        <th
+                          key={key}
+                          className="px-4 py-2 border-b text-left font-semibold text-gray-700"
+                        >
+                          {key.replace(/_/g, " ").toUpperCase()}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((row, i) => (
+                      <tr key={i} className="hover:bg-emerald-50">
+                        {Object.values(row).map((val, j) => (
+                          <td key={j} className="px-4 py-2 border-b">
+                            {val}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-center text-gray-400">
+                No data available for this period.
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
+}
+
+// Tabs Configuration
+const tabs = [
+  {
+    id: "revenue",
+    label: "Revenue Report",
+    icon: <BarChart3 size={18} />,
+  },
+  {
+    id: "sales",
+    label: "Sales Report",
+    icon: <TrendingUp size={18} />,
+  },
+  {
+    id: "farmers",
+    label: "Farmer Report",
+    icon: <Users size={18} />,
+  },
+];
+
+// Helper for Aggregation Totals
+function getTotals(data, type) {
+  if (!data || !data.length) return [];
+  if (type === "revenue") {
+    const total = data.reduce((s, r) => s + Number(r.total_amount || 0), 0);
+    const hubRev = data.reduce((s, r) => s + Number(r.hub_revenue || 0), 0);
+    const tx = data.reduce((s, r) => s + Number(r.transaction_count || 0), 0);
+    return [
+      { label: "Total Transactions", value: tx.toLocaleString() },
+      { label: "Total Hub Revenue", value: `${hubRev.toLocaleString()} Rwf` },
+      { label: "Total Sales", value: `${total.toLocaleString()} Rwf` },
+    ];
+  } else if (type === "sales") {
+    const totalQty = data.reduce(
+      (s, r) => s + Number(r.total_quantity || 0),
+      0
+    );
+    const totalRev = data.reduce((s, r) => s + Number(r.total_revenue || 0), 0);
+    return [
+      { label: "Products Sold", value: data.length.toLocaleString() },
+      { label: "Total Quantity", value: totalQty.toLocaleString() },
+      { label: "Total Revenue", value: `${totalRev.toLocaleString()} Rwf` },
+    ];
+  } else if (type === "farmers") {
+    const farmers = data.length;
+    const deliveries = data.reduce(
+      (s, r) => s + Number(r.total_deliveries || 0),
+      0
+    );
+    const earned = data.reduce((s, r) => s + Number(r.total_earned || 0), 0);
+    return [
+      { label: "Active Farmers", value: farmers.toLocaleString() },
+      { label: "Deliveries", value: deliveries.toLocaleString() },
+      { label: "Total Earnings", value: `${earned.toLocaleString()} Rwf` },
+    ];
+  }
+  return [];
 }
 
 function Notifications() {

@@ -59,16 +59,11 @@ export const authAPI = {
 
   signupFarmer: (data) =>
     api.post("/auth/register-farmer", data).then((res) => res.data),
-
   register: (userData) => api.post("/auth/register", userData),
-
   getProfile: () => api.get("/auth/profile"),
-
   updateProfile: (userData) => api.put("/auth/profile", userData),
-
   changePassword: (currentPassword, newPassword) =>
     api.post("/auth/change-password", { currentPassword, newPassword }),
-
   logout: () => api.post("/auth/logout"),
 };
 
@@ -126,15 +121,15 @@ export const clerkAPI = {
   processPayout: (payoutId, providerRef) =>
     api.post(`/clerk/payouts/${payoutId}/process`, { providerRef }),
 
-  // Reports
-  getReports: (startDate, endDate, type) => {
+  //report
+  getReports: (startDate, endDate, type, format = null, axiosConfig = {}) => {
     const params = new URLSearchParams();
     if (startDate) params.append("startDate", startDate);
     if (endDate) params.append("endDate", endDate);
     if (type) params.append("type", type);
-    return api.get(`/clerk/reports?${params}`);
+    if (format) params.append("format", format);
+    return api.get(`/clerk/reports?${params.toString()}`, axiosConfig);
   },
-
   // Notifications
   getNotifications: (page = 1, limit = 20) =>
     api.get(`/clerk/notifications?page=${page}&limit=${limit}`),

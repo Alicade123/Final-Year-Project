@@ -1,6 +1,9 @@
 // src/controllers/clerkController.js
 const db = require("../config/db");
-
+const { Parser } = require("json2csv");
+const ExcelJS = require("exceljs");
+const PDFDocument = require("pdfkit");
+const debug = require("debug")("app:reports"); // optional: npm i debug
 /**
  * Get Dashboard Overview Statistics
  */
@@ -1002,100 +1005,353 @@ exports.processPayout = async (req, res) => {
 /**
  * Get Reports Data
  */
+
+// exports.getReports = async (req, res) => {
+//   try {
+//     const clerkId = req.user.id;
+//     const { startDate, endDate, type, format } = req.query;
+
+//     // 1. Get Hub for Clerk
+//     const hubResult = await db.query(
+//       "SELECT id, name FROM hubs WHERE manager_id = $1",
+//       [clerkId]
+//     );
+//     if (hubResult.rows.length === 0)
+//       return res.status(404).json({ error: "Hub not found" });
+
+//     const hubId = hubResult.rows[0].id;
+//     const hubName = hubResult.rows[0].name;
+
+//     const start = startDate || "2020-01-01";
+//     const end = endDate || new Date().toISOString().split("T")[0];
+
+//     let reportData = {};
+
+//     // 2. Revenue Report
+//     if (!type || type === "revenue") {
+//       const revenue = await db.query(
+//         `SELECT
+//           DATE_TRUNC('month', p.created_at) as month,
+//           SUM(p.hub_fee) as hub_revenue,
+//           SUM(p.farmer_amount) as farmer_amount,
+//           SUM(p.amount) as total_amount,
+//           COUNT(p.id) as transaction_count
+//          FROM payments p
+//          JOIN orders o ON p.order_id = o.id
+//          WHERE o.hub_id = $1
+//          AND p.status = 'SUCCESS'
+//          AND p.created_at BETWEEN $2 AND $3
+//          GROUP BY DATE_TRUNC('month', p.created_at)
+//          ORDER BY month DESC`,
+//         [hubId, start, end]
+//       );
+//       reportData.revenue = revenue.rows;
+//     }
+
+//     // 3. Sales Report
+//     if (!type || type === "sales") {
+//       const sales = await db.query(
+//         `SELECT
+//           l.produce_name,
+//           l.category,
+//           SUM(oi.quantity) as total_quantity,
+//           l.unit,
+//           COUNT(DISTINCT oi.order_id) as order_count,
+//           SUM(oi.subtotal) as total_revenue
+//          FROM order_items oi
+//          JOIN lots l ON oi.lot_id = l.id
+//          JOIN orders o ON oi.order_id = o.id
+//          WHERE l.hub_id = $1
+//          AND o.created_at BETWEEN $2 AND $3
+//          GROUP BY l.produce_name, l.category, l.unit
+//          ORDER BY total_revenue DESC`,
+//         [hubId, start, end]
+//       );
+//       reportData.sales = sales.rows;
+//     }
+
+//     // 4. Farmer Report
+//     if (!type || type === "farmers") {
+//       const farmers = await db.query(
+//         `SELECT
+//           u.id,
+//           u.full_name,
+//           COUNT(DISTINCT l.id) as total_deliveries,
+//           SUM(l.quantity) as total_quantity,
+//           SUM(po.amount) as total_earned
+//          FROM users u
+//          JOIN lots l ON u.id = l.farmer_id
+//          LEFT JOIN payouts po ON u.id = po.farmer_id
+//          WHERE l.hub_id = $1
+//          AND l.posted_at BETWEEN $2 AND $3
+//          GROUP BY u.id, u.full_name
+//          ORDER BY total_earned DESC`,
+//         [hubId, start, end]
+//       );
+//       reportData.farmers = farmers.rows;
+//     }
+
+//     // 5. Export handling
+//     if (format === "csv") {
+//       const parser = new Parser();
+//       const dataToExport = reportData[Object.keys(reportData)[0]] || [];
+//       const csv = parser.parse(dataToExport);
+//       res.header("Content-Type", "text/csv");
+//       res.attachment(`report_${Date.now()}.csv`);
+//       return res.send(csv);
+//     } else if (format === "xlsx") {
+//       const workbook = new ExcelJS.Workbook();
+//       const sheet = workbook.addWorksheet("Report");
+//       const rows = reportData[Object.keys(reportData)[0]] || [];
+//       if (rows.length) {
+//         sheet.columns = Object.keys(rows[0]).map((k) => ({
+//           header: k,
+//           key: k,
+//         }));
+//         sheet.addRows(rows);
+//       }
+//       res.header(
+//         "Content-Type",
+//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+//       );
+//       res.attachment(`report_${Date.now()}.xlsx`);
+//       return workbook.xlsx.write(res).then(() => res.end());
+//     } else if (format === "pdf") {
+//       const doc = new PDFDocument({ margin: 30 });
+//       res.setHeader("Content-Type", "application/pdf");
+//       res.setHeader(
+//         "Content-Disposition",
+//         `attachment; filename=report_${Date.now()}.pdf`
+//       );
+
+//       doc.fontSize(16).text(`Report: ${type || "All"}`, { align: "center" });
+//       doc.fontSize(12).text(`Hub: ${hubName}`, { align: "center" }).moveDown(1);
+
+//       const rows = reportData[Object.keys(reportData)[0]] || [];
+//       rows.forEach((row) => {
+//         for (const key in row) doc.text(`${key}: ${row[key]}`);
+//         doc.moveDown(0.5);
+//       });
+//       doc.end();
+//       return doc.pipe(res);
+//     }
+
+//     // 6. Default JSON response
+//     res.json({ hubName, period: { start, end }, ...reportData });
+//   } catch (error) {
+//     console.error("Error generating reports:", error);
+//     res.status(500).json({ error: "Failed to generate reports" });
+//   }
+// };
+
+// controllers/reports.js (or wherever you keep it)
+
+// controllers/reportsController.js
+
+/**
+ * GET /clerk/reports
+ * Query params:
+ *  - startDate (YYYY-MM-DD)
+ *  - endDate   (YYYY-MM-DD)
+ *  - type      (revenue | sales | farmers)  // optional
+ *  - format    (csv | xlsx | pdf)           // optional -> triggers file download
+ */
+
 exports.getReports = async (req, res) => {
   try {
-    const clerkId = req.user.id;
-    const { startDate, endDate, type } = req.query;
+    const clerkId = req.user && req.user.id;
+    const { startDate, endDate, type, format } = req.query;
 
+    if (!clerkId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    // 1️⃣ Resolve the hub managed by this clerk
     const hubResult = await db.query(
-      "SELECT id, name FROM hubs WHERE manager_id = $1",
+      "SELECT id, name FROM hubs WHERE manager_id = $1 LIMIT 1",
       [clerkId]
     );
 
-    if (hubResult.rows.length === 0) {
-      return res.status(404).json({ error: "Hub not found" });
+    if (!hubResult.rows.length) {
+      debug(`No hub found for clerk ${clerkId}`);
+      return res.status(404).json({ success: false, error: "Hub not found" });
     }
 
     const hubId = hubResult.rows[0].id;
     const hubName = hubResult.rows[0].name;
 
-    const start = startDate || "2020-01-01";
-    const end = endDate || new Date().toISOString().split("T")[0];
+    // 2️⃣ Normalize dates
+    const start =
+      startDate && startDate.trim() !== ""
+        ? `${startDate}T00:00:00+00`
+        : "2020-01-01T00:00:00+00";
 
-    let reportData = {};
+    const end =
+      endDate && endDate.trim() !== ""
+        ? `${endDate}T23:59:59+00`
+        : new Date().toISOString();
 
-    // Revenue Report
+    // 3️⃣ Collect report data
+    const reportData = {};
+
+    // 🧾 Revenue Report
     if (!type || type === "revenue") {
-      const revenue = await db.query(
-        `SELECT 
-          DATE_TRUNC('month', p.created_at) as month,
-          SUM(p.hub_fee) as hub_revenue,
-          SUM(p.farmer_amount) as farmer_amount,
-          SUM(p.amount) as total_amount,
-          COUNT(p.id) as transaction_count
-         FROM payments p
-         JOIN orders o ON p.order_id = o.id
-         WHERE o.hub_id = $1 
-         AND p.status = 'SUCCESS'
-         AND p.created_at BETWEEN $2 AND $3
-         GROUP BY DATE_TRUNC('month', p.created_at)
-         ORDER BY month DESC`,
-        [hubId, start, end]
-      );
+      const revenueSql = `
+        SELECT 
+          DATE_TRUNC('month', COALESCE(p.paid_at, p.created_at)) AS month,
+          COALESCE(SUM(p.hub_fee),0)::numeric(14,2) AS hub_revenue,
+          COALESCE(SUM(p.farmer_amount),0)::numeric(14,2) AS farmer_amount,
+          COALESCE(SUM(p.amount),0)::numeric(14,2) AS total_amount,
+          COALESCE(COUNT(p.id),0)::int AS transaction_count
+        FROM payments p
+        JOIN orders o ON p.order_id = o.id
+        WHERE o.hub_id = $1
+          AND p.status = 'SUCCESS'
+          AND COALESCE(p.paid_at, p.created_at)
+              BETWEEN $2::timestamptz AND $3::timestamptz
+        GROUP BY DATE_TRUNC('month', COALESCE(p.paid_at, p.created_at))
+        ORDER BY month DESC
+      `;
+      const revenue = await db.query(revenueSql, [hubId, start, end]);
       reportData.revenue = revenue.rows;
+      debug(`Revenue rows: ${revenue.rows.length}`);
     }
 
-    // Sales Report
+    // 🛍️ Sales Report
     if (!type || type === "sales") {
-      const sales = await db.query(
-        `SELECT 
+      const salesSql = `
+        SELECT
           l.produce_name,
           l.category,
-          SUM(oi.quantity) as total_quantity,
+          COALESCE(SUM(oi.quantity),0)::numeric(18,3) AS total_quantity,
           l.unit,
-          COUNT(DISTINCT oi.order_id) as order_count,
-          SUM(oi.subtotal) as total_revenue
-         FROM order_items oi
-         JOIN lots l ON oi.lot_id = l.id
-         JOIN orders o ON oi.order_id = o.id
-         WHERE l.hub_id = $1
-         AND o.created_at BETWEEN $2 AND $3
-         GROUP BY l.produce_name, l.category, l.unit
-         ORDER BY total_revenue DESC`,
-        [hubId, start, end]
-      );
+          COALESCE(COUNT(DISTINCT oi.order_id),0)::int AS order_count,
+          COALESCE(SUM(oi.subtotal),0)::numeric(14,2) AS total_revenue
+        FROM order_items oi
+        JOIN lots l ON oi.lot_id = l.id
+        JOIN orders o ON oi.order_id = o.id
+        WHERE l.hub_id = $1
+          AND o.created_at BETWEEN $2::timestamptz AND $3::timestamptz
+        GROUP BY l.produce_name, l.category, l.unit
+        ORDER BY total_revenue DESC
+      `;
+      const sales = await db.query(salesSql, [hubId, start, end]);
       reportData.sales = sales.rows;
+      debug(`Sales rows: ${sales.rows.length}`);
     }
 
-    // Farmer Report
+    // 👨‍🌾 Farmers Report
     if (!type || type === "farmers") {
-      const farmers = await db.query(
-        `SELECT 
+      const farmersSql = `
+        SELECT
           u.id,
           u.full_name,
-          COUNT(DISTINCT l.id) as total_deliveries,
-          SUM(l.quantity) as total_quantity,
-          SUM(po.amount) as total_earned
-         FROM users u
-         JOIN lots l ON u.id = l.farmer_id
-         LEFT JOIN payouts po ON u.id = po.farmer_id
-         WHERE l.hub_id = $1
-         AND l.posted_at BETWEEN $2 AND $3
-         GROUP BY u.id, u.full_name
-         ORDER BY total_earned DESC`,
-        [hubId, start, end]
-      );
+          COALESCE(COUNT(DISTINCT l.id),0)::int AS total_deliveries,
+          COALESCE(SUM(l.quantity),0)::numeric(18,3) AS total_quantity,
+          COALESCE(SUM(po.amount),0)::numeric(14,2) AS total_earned
+        FROM users u
+        JOIN lots l ON u.id = l.farmer_id
+        LEFT JOIN payouts po ON u.id = po.farmer_id
+        WHERE l.hub_id = $1
+          AND l.posted_at BETWEEN $2::timestamptz AND $3::timestamptz
+        GROUP BY u.id, u.full_name
+        ORDER BY total_earned DESC
+      `;
+      const farmers = await db.query(farmersSql, [hubId, start, end]);
       reportData.farmers = farmers.rows;
+      debug(`Farmer rows: ${farmers.rows.length}`);
     }
 
-    res.json({
-      hubName,
+    // 4️⃣ JSON response payload
+    const jsonPayload = {
+      success: true,
+      hub: { id: hubId, name: hubName },
       period: { start, end },
-      ...reportData,
-    });
-  } catch (error) {
-    console.error("Error generating reports:", error);
-    res.status(500).json({ error: "Failed to generate reports" });
+      data: reportData,
+    };
+
+    // 5️⃣ Export handling (csv, xlsx, pdf)
+    if (format) {
+      const exportKey = type || Object.keys(reportData)[0] || "revenue";
+      const rows = reportData[exportKey] || [];
+
+      if (format === "csv") {
+        const parser = new Parser();
+        const csv = parser.parse(rows);
+        res.header("Content-Type", "text/csv; charset=utf-8");
+        res.attachment(`report_${exportKey}_${Date.now()}.csv`);
+        return res.send(csv);
+      }
+
+      if (format === "xlsx") {
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet("Report");
+        if (rows.length) {
+          sheet.columns = Object.keys(rows[0]).map((k) => ({
+            header: k,
+            key: k,
+          }));
+          sheet.addRows(rows);
+        }
+        res.header(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.attachment(`report_${exportKey}_${Date.now()}.xlsx`);
+        await workbook.xlsx.write(res);
+        return res.end();
+      }
+
+      if (format === "pdf") {
+        const doc = new PDFDocument({ margin: 30, size: "A4" });
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename=report_${exportKey}_${Date.now()}.pdf`
+        );
+
+        doc.pipe(res);
+        doc.rect(30, 30, 540, 30).fill("#059669");
+        doc
+          .fillColor("#fff")
+          .fontSize(16)
+          .text(`${(exportKey || "").toUpperCase()} REPORT`, 0, 38, {
+            align: "center",
+          });
+        doc.moveDown(1.5);
+        doc.fillColor("#000");
+        doc.fontSize(12).text(`Hub: ${hubName}`);
+        doc.fontSize(10).text(`Period: ${start} → ${end}`);
+        doc.moveDown(1);
+
+        if (rows.length === 0) {
+          doc.fontSize(11).text("No records for this period.");
+        } else {
+          rows.forEach((row, idx) => {
+            doc.fontSize(11).text(`Record ${idx + 1}`, { underline: true });
+            for (const [key, value] of Object.entries(row)) {
+              doc.fontSize(10).text(`${key}: ${String(value)}`);
+            }
+            doc.moveDown(0.5);
+          });
+        }
+
+        doc.end();
+        return;
+      }
+
+      return res
+        .status(400)
+        .json({ success: false, error: "Unsupported export format" });
+    }
+
+    // 6️⃣ Default JSON response
+    return res.json(jsonPayload);
+  } catch (err) {
+    console.error("Error generating reports:", err);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to generate reports" });
   }
 };
 
