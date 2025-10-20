@@ -60,7 +60,7 @@ export default function CheckoutModal({ cart, hubId, onClose, onSuccess }) {
                     {item.produce_name} × {item.quantity} {item.unit}
                   </span>
                   <span>
-                    ${(item.price_per_unit * item.quantity).toFixed(2)}
+                    {(item.price_per_unit * item.quantity).toFixed(2)} Rwf
                   </span>
                 </li>
               ))}
@@ -70,7 +70,7 @@ export default function CheckoutModal({ cart, hubId, onClose, onSuccess }) {
           <div className="flex items-center justify-between border-t pt-4">
             <span className="font-bold text-neutral-800">Total</span>
             <span className="text-xl font-bold text-green-600">
-              ${total.toFixed(2)}
+              {total.toFixed(2)} Rwf
             </span>
           </div>
 

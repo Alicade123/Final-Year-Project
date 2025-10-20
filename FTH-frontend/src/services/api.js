@@ -76,8 +76,13 @@ export const clerkAPI = {
     api.get(`/clerk/dashboard/activity?limit=${limit}`),
 
   // Farmers
-  getFarmers: (page = 1, limit = 20) =>
-    api.get(`/clerk/farmers?page=${page}&limit=${limit}`),
+  // getFarmers: (page = 1, limit = 20) =>
+  //   api.get(`/clerk/farmers?page=${page}&limit=${limit}`),
+  getFarmers: (page = 1, limit = 20, search = "") => {
+    const params = new URLSearchParams({ page, limit });
+    if (search) params.append("search", search);
+    return api.get(`/clerk/farmers?${params.toString()}`);
+  },
 
   getFarmerDetails: (farmerId) => api.get(`/clerk/farmers/${farmerId}`),
   addFarmer: (data) => api.post("/clerk/farmers", data).then((res) => res.data),

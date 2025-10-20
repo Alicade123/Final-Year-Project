@@ -86,7 +86,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <header className="flex items-center justify-between bg-white shadow-sm px-6 py-4">
         <h1 className="text-2xl font-bold text-emerald-700 tracking-tight">
-          Admin Dashboard
+          Super Admin Dashboard
         </h1>
         <button
           onClick={handleLogout}

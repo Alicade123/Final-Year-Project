@@ -51,14 +51,14 @@ export default function FarmerDashboard() {
   return (
     <div className="flex h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-72 bg-gradient-to-b from-green-900 via-green-800 to-emerald-900 text-white flex-col shadow-2xl">
-        <div className="p-6 border-b border-green-700/50">
+      <aside className="hidden lg:flex w-72 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-900 text-white flex-col shadow-2xl">
+        <div className="p-6 border-b border-emerald-700/50">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
               <Sprout className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="font-bold text-xl">Farmer Portal</h1>
+              <h1 className="font-bold text-xl">Farmer Dashboard</h1>
               <p className="text-green-300 text-xs">Sell Your Harvest</p>
             </div>
           </div>
@@ -74,7 +74,7 @@ export default function FarmerDashboard() {
                 onClick={() => setActive(item.key)}
                 className={`group flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-gradient-to-r from-green-600 to-emerald-600 shadow-lg scale-105"
+                    ? "bg-gradient-to-r from-emerald-600 to-emerald-600 shadow-lg scale-105"
                     : "hover:bg-green-700/50 text-green-100"
                 }`}
               >
@@ -298,8 +298,8 @@ function Overview() {
     },
     {
       label: "Total Earnings",
-      value: `$${stats?.totalEarnings?.toFixed(2) || 0}`,
-      change: `$${stats?.pendingEarnings?.toFixed(2) || 0} pending`,
+      value: `${stats?.totalEarnings?.toFixed(2) || 0} Rwf`,
+      change: `${stats?.pendingEarnings?.toFixed(2) || 0} Rwf pending`,
       icon: DollarSign,
       color: "amber",
       subtitle: "All time",
@@ -384,13 +384,13 @@ function Overview() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl shadow-lg p-6 text-white">
+        <div className="bg-emerald-600 rounded-2xl shadow-lg p-6 text-white">
           <h3 className="text-xl font-bold mb-4">Account Summary</h3>
           <div className="space-y-3">
             <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
               <p className="text-sm text-green-100">Pending Earnings</p>
               <p className="text-2xl font-bold">
-                ${stats?.pendingEarnings?.toFixed(2) || 0}
+                {stats?.pendingEarnings?.toFixed(2) || 0} Rwf
               </p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
@@ -477,7 +477,7 @@ function MyProducts() {
                   {product.quantity} {product.unit}
                 </span>
                 <span className="text-green-600 font-bold text-xl">
-                  ${product.price_per_unit}/{product.unit}
+                  {product.price_per_unit} Rwf/{product.unit}
                 </span>
               </div>
               <p className="text-sm text-neutral-500">
@@ -719,7 +719,7 @@ function DeliveryRegistrationModal({ onClose }) {
 
               <div>
                 <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                  Price Per Unit ($) <span className="text-red-500">*</span>
+                  Price Per Unit (Rwf) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -771,11 +771,11 @@ function DeliveryRegistrationModal({ onClose }) {
                     Total Value:
                   </span>
                   <span className="text-2xl font-bold text-green-600">
-                    $
                     {(
                       parseFloat(formData.quantity) *
                       parseFloat(formData.pricePerUnit)
-                    ).toFixed(2)}
+                    ).toFixed(2)}{" "}
+                    Rwf
                   </span>
                 </div>
               </div>
@@ -872,7 +872,7 @@ function Earnings() {
                     {new Date(payout.payment_date).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 font-bold text-green-600">
-                    ${payout.amount}
+                    {payout.amount} Rwf
                   </td>
                   <td className="px-6 py-4 text-neutral-600">
                     #{payout.order_id.substring(0, 8)}
@@ -892,7 +892,9 @@ function Earnings() {
                       ) : (
                         <Clock size={12} />
                       )}
-                      {payout.status}
+                      {payout.status === "SENT"
+                        ? (payout.stat = "Received")
+                        : payout.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-neutral-600 text-sm">
@@ -946,7 +948,7 @@ function Analytics() {
                 </span>
                 <div className="text-right">
                   <p className="font-bold text-green-600">
-                    ${item.total_earned}
+                    {item.total_earned} Rwf
                   </p>
                   <p className="text-sm text-neutral-500">
                     {item.payout_count} payouts
@@ -976,7 +978,7 @@ function Analytics() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-blue-600">
-                    ${item.total_revenue}
+                    {item.total_revenue} Rwf
                   </p>
                   <p className="text-sm text-neutral-500">
                     {item.total_delivered} {item.unit}
@@ -1069,21 +1071,22 @@ function MarketPrices() {
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                 <span className="text-sm text-neutral-600">Average</span>
                 <span className="text-lg font-bold text-green-600">
-                  ${price.avg_price}/{price.unit}
+                  {}
+                  {Number(price.avg_price).toFixed(2)} Rwf/{price.unit}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex-1 text-center p-2 bg-neutral-50 rounded-lg">
                   <p className="text-xs text-neutral-500">Min</p>
                   <p className="font-semibold text-neutral-700">
-                    ${price.min_price}
+                    {price.min_price} Rwf
                   </p>
                 </div>
                 <div className="w-4"></div>
                 <div className="flex-1 text-center p-2 bg-neutral-50 rounded-lg">
                   <p className="text-xs text-neutral-500">Max</p>
                   <p className="font-semibold text-neutral-700">
-                    ${price.max_price}
+                    {price.max_price} Rwf
                   </p>
                 </div>
               </div>

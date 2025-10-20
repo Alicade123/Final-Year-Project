@@ -24,6 +24,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useAPI, useAPICall } from "../hooks/useAPI";
 import { buyerAPI } from "../services/api";
@@ -94,7 +96,7 @@ export default function BuyerDashboard() {
               <ShoppingCart className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="font-bold text-xl">Buyer Portal</h1>
+              <h1 className="font-bold text-xl">Buyer Dashboard</h1>
               <p className="text-green-300 text-xs">Shop Fresh Produce</p>
             </div>
           </div>
@@ -342,7 +344,7 @@ function Overview() {
     },
     {
       label: "Monthly Spent",
-      value: `$${stats?.monthlySpent?.toFixed(2) || 0}`,
+      value: `${stats?.monthlySpent?.toFixed(2) || 0} Rwf`,
       change: "+12%",
       icon: DollarSign,
       color: "purple",
@@ -411,16 +413,16 @@ function Overview() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
+        <div className="bg-emerald-700 rounded-2xl shadow-lg p-6 text-white">
           <h3 className="text-xl font-bold mb-4">Featured</h3>
           <div className="space-y-3">
             <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
               <p className="text-sm text-green-100">Fresh Tomatoes</p>
-              <p className="text-2xl font-bold">$0.80/Kg</p>
+              <p className="text-2xl font-bold">1800 Rwf/Kg</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
               <p className="text-sm text-green-100">Maize - Premium</p>
-              <p className="text-2xl font-bold">$1.20/Kg</p>
+              <p className="text-2xl font-bold">2450 Rwf/Kg</p>
             </div>
           </div>
         </div>
@@ -429,8 +431,9 @@ function Overview() {
   );
 }
 
-// Marketplace Component
-function Marketplace({
+// // Marketplace Component
+
+export function Marketplace({
   cart,
   addToCart,
   removeFromCart,
@@ -441,12 +444,17 @@ function Marketplace({
     category: "",
     hubId: "",
     search: "",
+    page: 1,
+    limit: 8,
   });
   const [showCart, setShowCart] = useState(false);
-  const { data, loading, error } = useAPI(
+
+  // Fetch products based on filters (including pagination)
+  const { data, loading, error, refetch } = useAPI(
     () => buyerAPI.browseProducts(filters),
     [filters]
   );
+
   const { data: hubs } = useAPI(() => buyerAPI.getHubs());
   const { data: categories } = useAPI(() => buyerAPI.getCategories());
 
@@ -454,6 +462,14 @@ function Marketplace({
     (sum, item) => sum + item.price_per_unit * item.quantity,
     0
   );
+
+  const totalPages = data?.total ? Math.ceil(data.total / filters.limit) : 1;
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setFilters((prev) => ({ ...prev, page: newPage }));
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
@@ -466,11 +482,12 @@ function Marketplace({
           <Filter size={20} className="text-neutral-600" />
           <h3 className="text-lg font-bold text-neutral-800">Filters</h3>
         </div>
+
         <div className="grid md:grid-cols-4 gap-4">
           <select
             value={filters.category}
             onChange={(e) =>
-              setFilters({ ...filters, category: e.target.value })
+              setFilters({ ...filters, category: e.target.value, page: 1 })
             }
             className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
           >
@@ -481,9 +498,12 @@ function Marketplace({
               </option>
             ))}
           </select>
+
           <select
             value={filters.hubId}
-            onChange={(e) => setFilters({ ...filters, hubId: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, hubId: e.target.value, page: 1 })
+            }
             className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option value="">All Hubs</option>
@@ -493,13 +513,17 @@ function Marketplace({
               </option>
             ))}
           </select>
+
           <input
             type="text"
             placeholder="Search products..."
             value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, search: e.target.value, page: 1 })
+            }
             className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
           />
+
           <button
             onClick={() => setShowCart(true)}
             className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
@@ -516,6 +540,39 @@ function Marketplace({
           <ProductCard key={i} product={product} onAddToCart={addToCart} />
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {data?.total > filters.limit && (
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={() => handlePageChange(filters.page - 1)}
+            disabled={filters.page === 1}
+            className={`p-2 border rounded-lg flex items-center gap-1 ${
+              filters.page === 1
+                ? "text-neutral-400 border-neutral-300 cursor-not-allowed"
+                : "text-green-700 border-green-700 hover:bg-green-700 hover:text-white"
+            }`}
+          >
+            <ChevronLeft size={18} /> Prev
+          </button>
+
+          <span className="font-semibold text-sm text-neutral-700">
+            Page {filters.page} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => handlePageChange(filters.page + 1)}
+            disabled={filters.page >= totalPages}
+            className={`p-2 border rounded-lg flex items-center gap-1 ${
+              filters.page >= totalPages
+                ? "text-neutral-400 border-neutral-300 cursor-not-allowed"
+                : "text-green-700 border-green-700 hover:bg-green-700 hover:text-white"
+            }`}
+          >
+            Next <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
 
       {/* Cart Modal */}
       {showCart && (
@@ -561,7 +618,7 @@ function ProductCard({ product, onAddToCart }) {
           </span>
         </div>
         <p className="text-green-600 font-bold text-2xl mb-4">
-          ${product.price_per_unit}/{product.unit}
+          {product.price_per_unit} Rwf/{product.unit}
         </p>
 
         <div className="flex items-center gap-2 mb-3">
@@ -599,131 +656,7 @@ function ProductCard({ product, onAddToCart }) {
   );
 }
 
-// Cart Modal Component
-//const [isModalOpen, setShowCheckout] = useState(false);
-// function CartModal({
-//   cart,
-//   onClose,
-//   onUpdateQuantity,
-//   onRemove,
-//   onClear,
-//   total,
-// }) {
-//   return (
-//     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-//       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-//         <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 flex items-center justify-between">
-//           <h2 className="text-2xl font-bold text-white">Shopping Cart</h2>
-//           <button
-//             onClick={onClose}
-//             className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
-//           >
-//             <X size={24} />
-//           </button>
-//         </div>
-
-//         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-//           {cart.length === 0 ? (
-//             <div className="text-center py-12">
-//               <ShoppingCart
-//                 className="mx-auto text-neutral-300 mb-4"
-//                 size={64}
-//               />
-//               <p className="text-neutral-600">Your cart is empty</p>
-//             </div>
-//           ) : (
-//             <div className="space-y-4">
-//               {cart.map((item, i) => (
-//                 <div
-//                   key={i}
-//                   className="flex items-center gap-4 p-4 bg-neutral-50 rounded-xl"
-//                 >
-//                   <div className="flex-1">
-//                     <h4 className="font-bold text-neutral-800">
-//                       {item.produce_name}
-//                     </h4>
-//                     <p className="text-sm text-neutral-600">
-//                       ${item.price_per_unit}/{item.unit}
-//                     </p>
-//                   </div>
-//                   <div className="flex items-center gap-2">
-//                     <button
-//                       onClick={() =>
-//                         onUpdateQuantity(item.id, item.quantity - 1)
-//                       }
-//                       className="p-1 bg-neutral-200 rounded"
-//                     >
-//                       <Minus size={16} />
-//                     </button>
-//                     <span className="w-12 text-center font-semibold">
-//                       {item.quantity}
-//                     </span>
-//                     <button
-//                       onClick={() =>
-//                         onUpdateQuantity(item.id, item.quantity + 1)
-//                       }
-//                       className="p-1 bg-neutral-200 rounded"
-//                     >
-//                       <Plus size={16} />
-//                     </button>
-//                   </div>
-//                   <div className="text-right">
-//                     <p className="font-bold text-green-600">
-//                       ${(item.price_per_unit * item.quantity).toFixed(2)}
-//                     </p>
-//                     <button
-//                       onClick={() => onRemove(item.id)}
-//                       className="text-red-600 text-sm hover:underline"
-//                     >
-//                       Remove
-//                     </button>
-//                   </div>
-//                 </div>
-//               ))}
-//             </div>
-//           )}
-//         </div>
-
-//         {cart.length > 0 && (
-//           <div className="border-t border-neutral-200 p-6">
-//             <div className="flex items-center justify-between mb-4">
-//               <span className="text-xl font-bold text-neutral-800">Total:</span>
-//               <span className="text-3xl font-bold text-green-600">
-//                 ${total.toFixed(2)}
-//               </span>
-//             </div>
-//             <div className="flex gap-3">
-//               <button
-//                 onClick={onClear}
-//                 className="flex-1 border-2 border-neutral-300 text-neutral-700 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-50 transition-all"
-//               >
-//                 Clear Cart
-//               </button>
-//               <button
-//                 onClick={() => setShowCheckout(true)}
-//                 className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
-//               >
-//                 Checkout
-//               </button>
-
-//               {showCheckout && (
-//                 <CheckoutModal
-//                   cart={cart}
-//                   hubId={selectedHubId} // you must pass current hub context here
-//                   onClose={() => setShowCheckout(false)}
-//                   onSuccess={(order) => {
-//                     onClear(); // clear cart after success
-//                     // Optionally redirect to payment page with order.id
-//                   }}
-//                 />
-//               )}
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
+//carts
 function CartModal({
   cart,
   onClose,
@@ -771,7 +704,7 @@ function CartModal({
                       {item.produce_name}
                     </h4>
                     <p className="text-sm text-neutral-600">
-                      ${item.price_per_unit}/{item.unit}
+                      {item.price_per_unit} Rwf/{item.unit}
                     </p>
                   </div>
 
@@ -801,7 +734,7 @@ function CartModal({
                   {/* Subtotal + Remove */}
                   <div className="text-right">
                     <p className="font-bold text-green-600">
-                      ${(item.price_per_unit * item.quantity).toFixed(2)}
+                      {(item.price_per_unit * item.quantity).toFixed(2)} Rwf
                     </p>
                     <button
                       onClick={() => onRemove(item.id)}
@@ -822,7 +755,7 @@ function CartModal({
             <div className="flex items-center justify-between mb-4">
               <span className="text-xl font-bold text-neutral-800">Total:</span>
               <span className="text-3xl font-bold text-green-600">
-                ${total.toFixed(2)}
+                {total.toFixed(2)} Rwf
               </span>
             </div>
 
@@ -863,221 +796,7 @@ function CartModal({
     </div>
   );
 }
-// function Orders() {
-//   const [statusFilter, setStatusFilter] = useState("");
-//   const [mode, setMode] = useState("LIST"); // LIST | DETAILS
-//   const [selectedOrder, setSelectedOrder] = useState(null);
-//   const [showPayment, setShowPayment] = useState(false);
-//   const [paymentMethod, setPaymentMethod] = useState("MOBILE_MONEY");
-//   const [loading, setLoading] = useState(false);
-
-//   const {
-//     data,
-//     loading: loadingOrders,
-//     error,
-//     refetch,
-//   } = useAPI(() => buyerAPI.getMyOrders(statusFilter), [statusFilter]);
-
-//   const handleViewDetails = async (order) => {
-//     const details = await buyerAPI.getOrderDetails(order.id);
-//     setSelectedOrder(details);
-//     setMode("DETAILS");
-//     setShowPayment(false);
-//   };
-
-//   const handlePayment = async () => {
-//     try {
-//       setLoading(true);
-//       await buyerAPI.initiatePayment(selectedOrder.id, {
-//         method: paymentMethod,
-//         providerRef: "TXN-" + Date.now(), // generate dummy ref for now
-//       });
-//       alert("✅ Payment initiated successfully!");
-//       await refetch();
-//       setMode("LIST");
-//     } catch (err) {
-//       alert(err.message);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   if (loadingOrders) return <LoadingSpinner />;
-//   if (error) return <ErrorMessage message={error} />;
-
-//   if (mode === "DETAILS" && selectedOrder) {
-//     return (
-//       <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
-//         <h3 className="text-2xl font-bold">
-//           Order #{selectedOrder.id.substring(0, 8)}
-//         </h3>
-//         <p className="text-neutral-600">
-//           Hub: {selectedOrder.hub_name} ({selectedOrder.hub_location})
-//         </p>
-//         <p>Status: {selectedOrder.status}</p>
-
-//         <div className="border-t pt-4 space-y-2">
-//           {selectedOrder.items.map((item, idx) => (
-//             <div key={idx} className="flex justify-between">
-//               <span>
-//                 {item.produce_name} × {item.quantity} {item.unit}
-//               </span>
-//               <span>${item.price}</span>
-//             </div>
-//           ))}
-//         </div>
-
-//         <div className="flex justify-between font-bold text-lg">
-//           <span>Total</span>
-//           <span>${selectedOrder.total_amount}</span>
-//         </div>
-
-//         {/* Actions */}
-//         <div className="space-y-4">
-//           {selectedOrder.status === "PENDING" && (
-//             <>
-//               {!showPayment ? (
-//                 <div className="flex gap-4">
-//                   <button
-//                     onClick={() => handleViewDetails(null)}
-//                     className="px-4 py-2 border rounded-xl"
-//                   >
-//                     Back
-//                   </button>
-//                   <button
-//                     onClick={() => setShowPayment(true)}
-//                     className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
-//                   >
-//                     Pay Now
-//                   </button>
-//                 </div>
-//               ) : (
-//                 <div className="border-t pt-4 space-y-4">
-//                   <label className="block">
-//                     <span className="text-sm text-gray-600">
-//                       Select Payment Method
-//                     </span>
-//                     <select
-//                       value={paymentMethod}
-//                       onChange={(e) => setPaymentMethod(e.target.value)}
-//                       className="mt-1 border px-3 py-2 rounded-lg w-full"
-//                     >
-//                       <option value="MOBILE_MONEY">Mobile Money</option>
-//                       <option value="BANK_TRANSFER">Bank Transfer</option>
-//                       <option value="CASH">Cash</option>
-//                       <option value="ONLINE">Online Payment</option>
-//                     </select>
-//                   </label>
-
-//                   <div className="flex gap-4">
-//                     <button
-//                       onClick={() => setShowPayment(false)}
-//                       className="px-4 py-2 border rounded-xl"
-//                     >
-//                       Cancel
-//                     </button>
-//                     <button
-//                       disabled={loading}
-//                       onClick={handlePayment}
-//                       className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
-//                     >
-//                       {loading ? "Processing..." : "Confirm Payment"}
-//                     </button>
-//                   </div>
-//                 </div>
-//               )}
-//             </>
-//           )}
-
-//           {/* Back button always available */}
-//           <button
-//             onClick={() => setMode("LIST")}
-//             className="px-4 py-2 border rounded-xl w-full"
-//           >
-//             Back to Orders
-//           </button>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   // ---- Default LIST Mode ----
-//   return (
-//     <div className="space-y-6">
-//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-//         <div>
-//           <h3 className="text-2xl font-bold text-neutral-800">My Orders</h3>
-//           <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
-//         </div>
-//         <select
-//           value={statusFilter}
-//           onChange={(e) => setStatusFilter(e.target.value)}
-//           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-//         >
-//           <option value="">All Orders</option>
-//           <option value="PENDING">Pending</option>
-//           <option value="PAID">Paid</option>
-//           <option value="FULFILLED">Fulfilled</option>
-//           <option value="CANCELLED">Cancelled</option>
-//         </select>
-//       </div>
-
-//       <div className="space-y-4">
-//         {data?.orders?.map((order, i) => (
-//           <div
-//             key={i}
-//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow"
-//           >
-//             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-//               <div className="flex-1">
-//                 <div className="flex items-center gap-3 mb-2">
-//                   <span className="font-bold text-lg text-neutral-800">
-//                     #{order.id.substring(0, 8)}
-//                   </span>
-//                   <span
-//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
-//                       order.status === "FULFILLED"
-//                         ? "bg-emerald-100 text-emerald-700"
-//                         : order.status === "PENDING"
-//                         ? "bg-amber-100 text-amber-700"
-//                         : order.status === "PAID"
-//                         ? "bg-green-100 text-green-700"
-//                         : "bg-red-100 text-red-700"
-//                     }`}
-//                   >
-//                     {order.status}
-//                   </span>
-//                 </div>
-//                 <p className="text-neutral-600 mb-1">
-//                   {order.hub_name} • {order.items?.length || 0} items
-//                 </p>
-//                 <p className="text-sm text-neutral-500">
-//                   {new Date(order.created_at).toLocaleDateString()}
-//                 </p>
-//               </div>
-//               <div className="flex items-center gap-4">
-//                 <div className="text-right">
-//                   <p className="text-sm text-neutral-500">Total</p>
-//                   <p className="text-2xl font-bold text-green-600">
-//                     ${order.total_amount}
-//                   </p>
-//                 </div>
-//                 <button
-//                   onClick={() => handleViewDetails(order)}
-//                   className="bg-green-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors"
-//                 >
-//                   View Details
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// Purchase History Component
+//orders
 function Orders() {
   const [statusFilter, setStatusFilter] = useState("");
   const [mode, setMode] = useState("LIST"); // LIST | DETAILS
@@ -1169,14 +888,14 @@ function Orders() {
               <span>
                 {item.produce_name} × {item.quantity} {item.unit}
               </span>
-              <span>${item.price}</span>
+              <span>{item.price} Rwf</span>
             </div>
           ))}
         </div>
 
         <div className="flex justify-between font-bold text-lg">
           <span>Total</span>
-          <span>${selectedOrder.total_amount}</span>
+          <span>{selectedOrder.total_amount} Rwf</span>
         </div>
 
         {/* Actions */}
@@ -1316,7 +1035,7 @@ function Orders() {
                 <div className="text-right">
                   <p className="text-sm text-neutral-500">Total</p>
                   <p className="text-2xl font-bold text-green-600">
-                    ${order.total_amount}
+                    {order.total_amount} Rwf
                   </p>
                 </div>
                 <button
@@ -1368,7 +1087,7 @@ function PurchaseHistory() {
                 </span>
                 <div className="text-right">
                   <p className="font-bold text-green-600">
-                    ${item.total_spent}
+                    {item.total_spent} Rwf
                   </p>
                   <p className="text-sm text-neutral-500">
                     {item.order_count} orders
@@ -1398,7 +1117,7 @@ function PurchaseHistory() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-emerald-600">
-                    ${item.total_spent}
+                    {item.total_spent} Rwf
                   </p>
                   <p className="text-sm text-neutral-500">
                     {item.total_quantity} {item.unit}

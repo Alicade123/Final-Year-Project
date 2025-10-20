@@ -29,12 +29,26 @@ import {
   Download,
   User,
   FileDown,
+  Contact,
+  PhoneIncoming,
+  PhoneOutgoing,
 } from "lucide-react";
-
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
-
+import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { clerkAPI } from "../services/api";
 import { useAPI, useAPICall } from "../hooks/useAPI";
@@ -211,6 +225,10 @@ export default function ClerkDashboard() {
             </div>
 
             <button className="relative p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+              <PhoneOutgoing size={20} className="text-neutral-600" />
+              {/* <span className="">Contact</span> */}
+            </button>
+            <button className="relative p-2 hover:bg-neutral-100 rounded-xl transition-colors">
               <Bell size={20} className="text-neutral-600" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full"></span>
             </button>
@@ -283,7 +301,7 @@ function Overview() {
     error,
     refetch,
   } = useAPI(() => clerkAPI.getDashboardStats());
-  const { data: activity } = useAPI(() => clerkAPI.getRecentActivity(5));
+  const { data: activity } = useAPI(() => clerkAPI.getRecentActivity(4));
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
@@ -419,18 +437,27 @@ function Overview() {
 }
 
 // Farmers Component with API Integration
-function Farmers() {
+
+export function Farmers() {
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState(""); // debounced value
+
+  // 🔁 Fetch farmers
   const { data, loading, error, execute } = useAPI(
-    () => clerkAPI.getFarmers(page, 20),
-    [page]
+    () => clerkAPI.getFarmers(page, 20, query),
+    [page, query]
   );
 
-  // Modal states
+  // Debounce search
+  useEffect(() => {
+    const delay = setTimeout(() => setQuery(search), 400);
+    return () => clearTimeout(delay);
+  }, [search]);
+
+  // --- Modal and Delete states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editFarmer, setEditFarmer] = useState(null);
-
-  // Delete states
   const [deleteFarmer, setDeleteFarmer] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -441,6 +468,7 @@ function Farmers() {
   const handleSuccess = async () => {
     setIsModalOpen(false);
     setEditFarmer(null);
+    await execute();
   };
 
   const handleDelete = async () => {
@@ -448,16 +476,7 @@ function Farmers() {
     try {
       setDeleting(true);
       setDeleteError("");
-
-      await fetch(`/api/clerk/farmers/${deleteFarmer.id}`, {
-        method: "DELETE",
-      }).then(async (res) => {
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to delete farmer");
-        }
-      });
-
+      await clerkAPI.deleteFarmer(deleteFarmer.id);
       setDeleteFarmer(null);
       await execute();
     } catch (err) {
@@ -477,15 +496,33 @@ function Farmers() {
           </h3>
           <p className="text-neutral-500">Total: {data?.total || 0} farmers</p>
         </div>
-        <button
-          onClick={() => {
-            setEditFarmer(null);
-            setIsModalOpen(true);
-          }}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-        >
-          <Plus size={18} /> Add Farmer
-        </button>
+
+        <div className="flex items-center gap-3">
+          {/* 🔍 Search */}
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-3 text-neutral-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search name or phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            />
+          </div>
+
+          <button
+            onClick={() => {
+              setEditFarmer(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+          >
+            <Plus size={18} /> Add Farmer
+          </button>
+        </div>
       </div>
 
       {/* Farmers Table */}
@@ -806,15 +843,203 @@ export function Products() {
 }
 
 //orders
-function Orders() {
+// function Orders() {
+//   const [statusFilter, setStatusFilter] = useState("");
+//   const [mode, setMode] = useState("LIST"); // LIST | DETAILS
+//   const [selectedOrder, setSelectedOrder] = useState(null);
+
+//   const { data, loading, error, refetch } = useAPI(
+//     () => clerkAPI.getOrders(statusFilter),
+//     [statusFilter]
+//   );
+
+//   const handleViewDetails = async (orderId) => {
+//     try {
+//       const details = await clerkAPI.getOrderDetails(orderId);
+//       setSelectedOrder(details);
+//       setMode("DETAILS");
+//     } catch (err) {
+//       alert(err.message);
+//     }
+//   };
+
+//   const handleUpdateStatus = async (orderId, status) => {
+//     try {
+//       await clerkAPI.updateOrderStatus(orderId, status);
+//       alert(`Order status updated to ${status}`);
+//       await refetch();
+//       setMode("LIST");
+//     } catch (err) {
+//       alert(err.message);
+//     }
+//   };
+
+//   // --- DETAILS Mode ---
+//   if (mode === "DETAILS" && selectedOrder) {
+//     return (
+//       <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
+//         <h3 className="text-2xl font-bold">
+//           Order #{selectedOrder.id.substring(0, 8)}
+//         </h3>
+//         <p className="text-neutral-600">
+//           Buyer:{" "}
+//           <span className="font-semibold">{selectedOrder.buyer_name}</span> •{" "}
+//           {selectedOrder.buyer_phone}
+//         </p>
+//         <p className="text-neutral-600">
+//           Hub: {selectedOrder.name || "Ruhango FTH"} (
+//           {selectedOrder.hub_location || "South Province"})
+//         </p>
+//         <p>Status: {selectedOrder.status}</p>
+//         <p>Created at: {new Date(selectedOrder.created_at).toLocaleString()}</p>
+
+//         <div className="border-t pt-4 space-y-2">
+//           {selectedOrder.items.map((item, idx) => (
+//             <div key={idx} className="flex justify-between">
+//               <span>
+//                 {item.produce_name} × {item.quantity} {item.unit}
+//               </span>
+//               <span>{(item.unit_price * item.quantity).toFixed(2)} Rwf</span>
+//             </div>
+//           ))}
+//         </div>
+//         <hr />
+//         <div className="flex justify-between font-bold text-lg">
+//           <span>Total</span>
+//           <span>{selectedOrder.total_amount} Rwf</span>
+//         </div>
+
+//         <div className="flex gap-4 mt-4">
+//           {selectedOrder.status === "PENDING" && (
+//             <button
+//               onClick={() => handleUpdateStatus(selectedOrder.id, "FULFILLED")}
+//               className="bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700"
+//             >
+//               Mark as Fulfilled
+//             </button>
+//           )}
+//           <button
+//             onClick={() => setMode("LIST")}
+//             className="px-4 py-2 border rounded-xl hover:cursor-pointer hover:bg-red-700 hover:border-none hover:text-white"
+//           >
+//             Back
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // --- LIST Mode ---
+//   if (loading) return <LoadingSpinner />;
+//   if (error) return <ErrorMessage message={error} />;
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+//         <div>
+//           <h3 className="text-2xl font-bold text-neutral-800">
+//             Order Management
+//           </h3>
+//           <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
+//         </div>
+//         <select
+//           value={statusFilter}
+//           onChange={(e) => setStatusFilter(e.target.value)}
+//           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+//         >
+//           <option value="">All Orders</option>
+//           <option value="PENDING">Pending</option>
+//           <option value="PAID">Paid</option>
+//           <option value="FULFILLED">Fulfilled</option>
+//           <option value="CANCELLED">Cancelled</option>
+//         </select>
+//       </div>
+
+//       <div className="space-y-4">
+//         {data?.orders?.map((order, i) => (
+//           <div
+//             key={i}
+//             className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-6 hover:shadow-xl transition-shadow"
+//           >
+//             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+//               <div className="flex-1">
+//                 <div className="flex items-center gap-3 mb-2">
+//                   <span className="font-bold text-lg text-neutral-800">
+//                     #{order.id.substring(0, 8)}
+//                   </span>
+//                   <span
+//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
+//                       order.status === "FULFILLED"
+//                         ? "bg-emerald-100 text-emerald-700"
+//                         : order.status === "PENDING"
+//                         ? "bg-amber-100 text-amber-700"
+//                         : order.status === "PAID"
+//                         ? "bg-blue-100 text-blue-700"
+//                         : "bg-red-100 text-red-700"
+//                     }`}
+//                   >
+//                     {order.status}
+//                   </span>
+//                 </div>
+//                 <p className="text-neutral-600 mb-1">
+//                   <span className="font-semibold">{order.buyer_name}</span> •{" "}
+//                   {order.buyer_phone}
+//                 </p>
+//                 <p className="text-sm text-neutral-500">
+//                   {new Date(order.created_at).toLocaleDateString()} •{" "}
+//                   {order.items?.length || 0} items
+//                 </p>
+//               </div>
+//               <div className="flex items-center gap-4">
+//                 <div className="text-right">
+//                   <p className="text-sm text-neutral-500">Amount</p>
+//                   <p className="text-2xl font-bold text-emerald-600">
+//                     {order.total_amount} Rwf
+//                   </p>
+//                 </div>
+//                 <button
+//                   onClick={() => handleViewDetails(order.id)}
+//                   className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
+//                 >
+//                   View Details
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+
+export function Orders() {
   const [statusFilter, setStatusFilter] = useState("");
   const [mode, setMode] = useState("LIST"); // LIST | DETAILS
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const { data, loading, error, refetch } = useAPI(
-    () => clerkAPI.getOrders(statusFilter),
-    [statusFilter]
-  );
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await clerkAPI.getOrders(statusFilter, page, limit);
+      setData(res);
+    } catch (err) {
+      setError(err.message || "Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [statusFilter, page]);
 
   const handleViewDetails = async (orderId) => {
     try {
@@ -830,12 +1055,15 @@ function Orders() {
     try {
       await clerkAPI.updateOrderStatus(orderId, status);
       alert(`Order status updated to ${status}`);
-      await refetch();
+      await fetchOrders();
       setMode("LIST");
     } catch (err) {
       alert(err.message);
     }
   };
+
+  const totalOrders = data?.total || 0;
+  const totalPages = Math.ceil(totalOrders / limit) || 1;
 
   // --- DETAILS Mode ---
   if (mode === "DETAILS" && selectedOrder) {
@@ -883,7 +1111,7 @@ function Orders() {
           )}
           <button
             onClick={() => setMode("LIST")}
-            className="px-4 py-2 border rounded-xl hover:cursor-pointer hover:bg-red-700 hover:border-none hover:text-white"
+            className="px-4 py-2 border rounded-xl hover:bg-red-700 hover:text-white transition"
           >
             Back
           </button>
@@ -903,11 +1131,14 @@ function Orders() {
           <h3 className="text-2xl font-bold text-neutral-800">
             Order Management
           </h3>
-          <p className="text-neutral-500">Total: {data?.total || 0} orders</p>
+          <p className="text-neutral-500">Total: {totalOrders} orders</p>
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setPage(1); // reset page on filter change
+            setStatusFilter(e.target.value);
+          }}
           className="px-4 py-2 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <option value="">All Orders</option>
@@ -962,7 +1193,7 @@ function Orders() {
                 </div>
                 <button
                   onClick={() => handleViewDetails(order.id)}
-                  className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
+                  className="bg-emerald-600 text-white px-6 py-1.5 rounded-xl font-normal hover:bg-emerald-700 transition-colors"
                 >
                   View Details
                 </button>
@@ -971,18 +1202,49 @@ function Orders() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 //payout
-
 export function Payouts() {
-  const { data, loading, error, refetch } = useAPI(() => clerkAPI.getPayouts());
-  const { execute: processPayout } = useAPICall();
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const [selectedPayout, setSelectedPayout] = useState(null);
   const [providerRef, setProviderRef] = useState("");
   const [processing, setProcessing] = useState(false);
+
+  // useAPI hook call with pagination dependency
+  const { data, loading, error, refetch } = useAPI(() =>
+    clerkAPI.getPayouts(null, page, limit)
+  );
+  const { execute: processPayout } = useAPICall();
+
+  const totalPayouts = data?.total || 0;
+  const totalPages = Math.ceil(totalPayouts / limit) || 1;
 
   function generateProviderRef(method) {
     const number = Math.floor(100000000 + Math.random() * 900000000);
@@ -1037,7 +1299,7 @@ export function Payouts() {
       toast.success("Payout marked as SENT");
       setSelectedPayout(null);
       setProviderRef("");
-      await refetch(); // refresh data
+      await refetch();
     } catch (err) {
       console.error(err);
       toast.error("Failed to process payout");
@@ -1045,6 +1307,11 @@ export function Payouts() {
       setProcessing(false);
     }
   };
+
+  // 🔁 Refetch data when page changes
+  useEffect(() => {
+    refetch();
+  }, [page]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
@@ -1056,7 +1323,7 @@ export function Payouts() {
           <h3 className="text-2xl font-bold text-neutral-800">
             Farmer Payouts
           </h3>
-          <p className="text-neutral-500">Total: {data?.total || 0} payouts</p>
+          <p className="text-neutral-500">Total: {totalPayouts} payouts</p>
         </div>
       </div>
 
@@ -1136,6 +1403,29 @@ export function Payouts() {
         </div>
       </div>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       {/* Modal */}
       {selectedPayout && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -1161,7 +1451,6 @@ export function Payouts() {
               placeholder="Enter Provider Reference"
               className="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
-
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setSelectedPayout(null)}
@@ -1186,6 +1475,379 @@ export function Payouts() {
 
 //Report
 
+// export function ReportsDashboard() {
+//   const [activeTab, setActiveTab] = useState("revenue");
+//   const [data, setData] = useState([]);
+//   const [startDate, setStartDate] = useState("");
+//   const [endDate, setEndDate] = useState("");
+//   const [loading, setLoading] = useState(false);
+
+//   const tabs = [
+//     { id: "revenue", label: "Revenue Report", icon: <DollarSign size={16} /> },
+//     { id: "sales", label: "Sales Report", icon: <Package size={16} /> },
+//     { id: "farmers", label: "Farmer Report", icon: <User size={16} /> },
+//   ];
+
+//   // ✅ Fetch reports
+//   const fetchReports = async () => {
+//     setLoading(true);
+//     try {
+//       const res = await clerkAPI.getReports(startDate, endDate, activeTab);
+//       console.log("📊 Report response:", res.data);
+//       // simplified to match backend structure
+//       setData(res.data?.[activeTab] || []);
+//     } catch (err) {
+//       console.error("Report fetch error:", err);
+//       alert("⚠️ Failed to load report data");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchReports();
+//   }, [activeTab]);
+
+//   // ✅ Totals calculator
+//   const getTotals = (data, type) => {
+//     if (!data || data.length === 0) return [];
+//     if (type === "revenue") {
+//       const totalHubRevenue = data.reduce(
+//         (s, r) => s + Number(r.hub_revenue || 0),
+//         0
+//       );
+//       const totalFarmerAmount = data.reduce(
+//         (s, r) => s + Number(r.farmer_amount || 0),
+//         0
+//       );
+//       const totalTransactions = data.reduce(
+//         (s, r) => s + Number(r.transaction_count || 0),
+//         0
+//       );
+//       return [
+//         {
+//           label: "Total Hub Revenue",
+//           value: `${totalHubRevenue.toLocaleString()} Rwf`,
+//         },
+//         {
+//           label: "Total Farmer Amount",
+//           value: `${totalFarmerAmount.toLocaleString()} Rwf`,
+//         },
+//         { label: "Total Transactions", value: totalTransactions },
+//       ];
+//     }
+//     if (type === "sales") {
+//       const totalRevenue = data.reduce(
+//         (s, r) => s + Number(r.total_revenue || 0),
+//         0
+//       );
+//       const totalOrders = data.reduce(
+//         (s, r) => s + Number(r.order_count || 0),
+//         0
+//       );
+//       return [
+//         {
+//           label: "Total Sales Revenue",
+//           value: `${totalRevenue.toLocaleString()} Rwf`,
+//         },
+//         { label: "Orders Processed", value: totalOrders },
+//       ];
+//     }
+//     if (type === "farmers") {
+//       const totalEarned = data.reduce(
+//         (s, r) => s + Number(r.total_earned || 0),
+//         0
+//       );
+//       return [
+//         {
+//           label: "Total Paid to Farmers",
+//           value: `${totalEarned.toLocaleString()} Rwf`,
+//         },
+//       ];
+//     }
+//     return [];
+//   };
+
+//   const totals = getTotals(data, activeTab);
+
+//   // ✅ Export functions
+//   const handleExport = (format) => {
+//     if (!data || data.length === 0) return alert("No data to export");
+//     try {
+//       if (format === "csv") {
+//         const headers = Object.keys(data[0]);
+//         const csvRows = [
+//           headers.join(","),
+//           ...data.map((row) =>
+//             headers.map((f) => JSON.stringify(row[f] ?? "")).join(",")
+//           ),
+//         ];
+//         const blob = new Blob([csvRows.join("\n")], {
+//           type: "text/csv;charset=utf-8;",
+//         });
+//         const link = document.createElement("a");
+//         link.href = URL.createObjectURL(blob);
+//         link.download = `${activeTab}_report.csv`;
+//         link.click();
+//       } else if (format === "xlsx") {
+//         const ws = XLSX.utils.json_to_sheet(data);
+//         const wb = XLSX.utils.book_new();
+//         XLSX.utils.book_append_sheet(wb, ws, "Report");
+//         XLSX.writeFile(wb, `${activeTab}_report.xlsx`);
+//       } else if (format === "pdf") {
+//         const element = document.getElementById("report-content");
+//         if (!element) return alert("⚠️ Report not ready for PDF export");
+//         html2canvas(element, {
+//           scale: 2,
+//           backgroundColor: "#ffffff",
+//           useCORS: true,
+//         }).then((canvas) => {
+//           const imgData = canvas.toDataURL("image/png");
+//           const pdf = new jsPDF("p", "mm", "a4");
+//           const pdfWidth = pdf.internal.pageSize.getWidth();
+//           const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+//           pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+//           pdf.save(`${activeTab}_report.pdf`);
+//         });
+//       }
+//     } catch (err) {
+//       console.error("Export error:", err);
+//       alert("⚠️ Export failed. Please try again.");
+//     }
+//   };
+
+//   // ✅ Small reusable button
+//   const CustomButton = ({ children, onClick, color }) => (
+//     <button
+//       onClick={onClick}
+//       className={`px-4 py-2 rounded-md text-white font-medium flex items-center gap-2 transition-all ${
+//         color === "green"
+//           ? "bg-emerald-600 hover:bg-emerald-700"
+//           : color === "blue"
+//           ? "bg-blue-600 hover:bg-blue-700"
+//           : "bg-amber-500 hover:bg-amber-600"
+//       }`}
+//     >
+//       {children}
+//     </button>
+//   );
+
+//   return (
+//     <div className="p-6">
+//       {/* Header */}
+//       <div className="flex flex-wrap justify-between items-center mb-6">
+//         <h1 className="text-2xl font-semibold text-emerald-700">
+//           Reports Dashboard
+//         </h1>
+//         <div className="flex flex-wrap gap-2 items-center">
+//           <div className="flex border-b">
+//             {tabs.map((tab) => (
+//               <button
+//                 key={tab.id}
+//                 onClick={() => setActiveTab(tab.id)}
+//                 className={`flex items-center gap-1 px-4 py-2 rounded-t-md transition-all ${
+//                   activeTab === tab.id
+//                     ? "bg-emerald-600 text-white"
+//                     : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+//                 }`}
+//               >
+//                 {tab.icon}
+//                 {tab.label}
+//               </button>
+//             ))}
+//           </div>
+
+//           <input
+//             type="date"
+//             value={startDate}
+//             onChange={(e) => setStartDate(e.target.value)}
+//             className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+//           />
+//           <input
+//             type="date"
+//             value={endDate}
+//             onChange={(e) => setEndDate(e.target.value)}
+//             className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+//           />
+//           <CustomButton color="green" onClick={fetchReports}>
+//             Apply
+//           </CustomButton>
+//           <CustomButton color="green" onClick={() => handleExport("pdf")}>
+//             <FileDown size={16} /> PDF
+//           </CustomButton>
+//           <CustomButton color="blue" onClick={() => handleExport("csv")}>
+//             <FileDown size={16} /> CSV
+//           </CustomButton>
+//           <CustomButton color="amber" onClick={() => handleExport("xlsx")}>
+//             <FileDown size={16} /> Excel
+//           </CustomButton>
+//         </div>
+//       </div>
+
+//       {/* Report content */}
+//       <div
+//         id="report-content"
+//         className="bg-white rounded-xl shadow-md border border-gray-200 p-6"
+//       >
+//         {loading ? (
+//           <p className="text-center text-gray-400">Loading...</p>
+//         ) : (
+//           <>
+//             {/* Totals summary */}
+//             <div className="grid md:grid-cols-3 gap-4 mb-6">
+//               {totals.map((item, idx) => (
+//                 <div
+//                   key={idx}
+//                   className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 shadow-sm"
+//                 >
+//                   <p className="text-sm text-gray-600">{item.label}</p>
+//                   <p className="text-xl font-semibold text-emerald-700 mt-1">
+//                     {item.value}
+//                   </p>
+//                 </div>
+//               ))}
+//             </div>
+
+//             {/* Charts Section */}
+//             {Array.isArray(data) && data.length > 0 && (
+//               <motion.div
+//                 initial={{ opacity: 0, y: 15 }}
+//                 animate={{ opacity: 1, y: 0 }}
+//                 transition={{ duration: 0.4 }}
+//                 className="bg-white border border-emerald-100 rounded-lg shadow-sm p-4 mb-6"
+//               >
+//                 <h2 className="text-lg font-semibold text-emerald-700 mb-3">
+//                   {activeTab === "revenue"
+//                     ? "Revenue Trends"
+//                     : activeTab === "sales"
+//                     ? "Sales Overview"
+//                     : "Farmers Statistics"}
+//                 </h2>
+
+//                 <ResponsiveContainer width="100%" height={350}>
+//                   {activeTab === "revenue" && (
+//                     <LineChart data={data}>
+//                       <CartesianGrid strokeDasharray="3 3" />
+//                       <XAxis
+//                         dataKey="month"
+//                         tickFormatter={(v) =>
+//                           new Date(v).toLocaleDateString("en-GB", {
+//                             month: "short",
+//                             day: "numeric",
+//                           })
+//                         }
+//                       />
+//                       <YAxis />
+//                       <Tooltip />
+//                       <Legend />
+//                       <Line
+//                         type="monotone"
+//                         dataKey="hub_revenue"
+//                         stroke="#10B981"
+//                         strokeWidth={2}
+//                         name="Hub Revenue"
+//                       />
+//                       <Line
+//                         type="monotone"
+//                         dataKey="farmer_amount"
+//                         stroke="#3B82F6"
+//                         strokeWidth={2}
+//                         name="Farmer Amount"
+//                       />
+//                       <Line
+//                         type="monotone"
+//                         dataKey="total_amount"
+//                         stroke="#F59E0B"
+//                         strokeWidth={2}
+//                         name="Total Revenue"
+//                       />
+//                     </LineChart>
+//                   )}
+
+//                   {activeTab === "sales" && (
+//                     <BarChart data={data}>
+//                       <CartesianGrid strokeDasharray="3 3" />
+//                       <XAxis dataKey="product_name" />
+//                       <YAxis />
+//                       <Tooltip />
+//                       <Legend />
+//                       <Bar
+//                         dataKey="total_revenue"
+//                         fill="#10B981"
+//                         name="Total Revenue"
+//                       />
+//                       <Bar
+//                         dataKey="total_quantity"
+//                         fill="#3B82F6"
+//                         name="Quantity Sold"
+//                       />
+//                     </BarChart>
+//                   )}
+
+//                   {activeTab === "farmers" && (
+//                     <BarChart data={data}>
+//                       <CartesianGrid strokeDasharray="3 3" />
+//                       <XAxis dataKey="farmer_name" />
+//                       <YAxis />
+//                       <Tooltip />
+//                       <Legend />
+//                       <Bar
+//                         dataKey="total_earned"
+//                         fill="#10B981"
+//                         name="Total Earned (Rwf)"
+//                       />
+//                       <Bar
+//                         dataKey="total_deliveries"
+//                         fill="#3B82F6"
+//                         name="Deliveries"
+//                       />
+//                     </BarChart>
+//                   )}
+//                 </ResponsiveContainer>
+//               </motion.div>
+//             )}
+
+//             {/* Table */}
+//             {Array.isArray(data) && data.length > 0 ? (
+//               <div className="overflow-x-auto">
+//                 <table className="min-w-full border text-sm">
+//                   <thead className="bg-emerald-50">
+//                     <tr>
+//                       {Object.keys(data[0]).map((key) => (
+//                         <th
+//                           key={key}
+//                           className="px-4 py-2 border-b text-left font-semibold text-gray-700"
+//                         >
+//                           {key.replace(/_/g, " ").toUpperCase()}
+//                         </th>
+//                       ))}
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {data.map((row, i) => (
+//                       <tr key={i} className="hover:bg-emerald-50">
+//                         {Object.values(row).map((val, j) => (
+//                           <td key={j} className="px-4 py-2 border-b">
+//                             {val}
+//                           </td>
+//                         ))}
+//                       </tr>
+//                     ))}
+//                   </tbody>
+//                 </table>
+//               </div>
+//             ) : (
+//               <p className="text-center text-gray-400">
+//                 No data available for this period.
+//               </p>
+//             )}
+//           </>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
+
 export function ReportsDashboard() {
   const [activeTab, setActiveTab] = useState("revenue");
   const [data, setData] = useState([]);
@@ -1199,14 +1861,16 @@ export function ReportsDashboard() {
     { id: "farmers", label: "Farmer Report", icon: <User size={16} /> },
   ];
 
-  // ✅ Fetch reports
+  // ✅ Fetch reports from backend
   const fetchReports = async () => {
     setLoading(true);
     try {
       const res = await clerkAPI.getReports(startDate, endDate, activeTab);
       console.log("📊 Report response:", res.data);
-      // setData(res.data?.data?.[activeTab] || []);
-      setData(res.data?.[activeTab] || []);
+      // Backend: res.data.data contains all tabs
+      const extracted = res.data?.[activeTab] || [];
+
+      setData(extracted);
     } catch (err) {
       console.error("Report fetch error:", err);
       alert("⚠️ Failed to load report data");
@@ -1219,85 +1883,86 @@ export function ReportsDashboard() {
     fetchReports();
   }, [activeTab]);
 
-  // ✅ Totals calculator
-  const getTotals = (data, type) => {
-    if (!data || data.length === 0) return [];
-    if (type === "revenue") {
-      const totalHubRevenue = data.reduce(
-        (s, r) => s + Number(r.hub_revenue || 0),
-        0
-      );
-      const totalFarmerAmount = data.reduce(
-        (s, r) => s + Number(r.farmer_amount || 0),
-        0
-      );
-      const totalTransactions = data.reduce(
-        (s, r) => s + Number(r.transaction_count || 0),
-        0
-      );
-      return [
-        {
-          label: "Total Hub Revenue",
-          value: `${totalHubRevenue.toLocaleString()} Rwf`,
-        },
-        {
-          label: "Total Farmer Amount",
-          value: `${totalFarmerAmount.toLocaleString()} Rwf`,
-        },
-        { label: "Total Transactions", value: totalTransactions },
-      ];
+  // ✅ Compute totals
+  const getTotals = (type) => {
+    if (!data?.length) return [];
+
+    switch (type) {
+      case "revenue": {
+        const totalHub = data.reduce(
+          (s, r) => s + Number(r.hub_revenue || 0),
+          0
+        );
+        const totalFarmer = data.reduce(
+          (s, r) => s + Number(r.farmer_amount || 0),
+          0
+        );
+        const totalTx = data.reduce(
+          (s, r) => s + Number(r.transaction_count || 0),
+          0
+        );
+        return [
+          {
+            label: "Total Hub Revenue",
+            value: `${totalHub.toLocaleString()} Rwf`,
+          },
+          {
+            label: "Total Farmer Amount",
+            value: `${totalFarmer.toLocaleString()} Rwf`,
+          },
+          { label: "Transactions", value: totalTx },
+        ];
+      }
+      case "sales": {
+        const totalRevenue = data.reduce(
+          (s, r) => s + Number(r.total_revenue || 0),
+          0
+        );
+        const totalOrders = data.reduce(
+          (s, r) => s + Number(r.order_count || 0),
+          0
+        );
+        return [
+          {
+            label: "Sales Revenue",
+            value: `${totalRevenue.toLocaleString()} Rwf`,
+          },
+          { label: "Orders", value: totalOrders },
+        ];
+      }
+      case "farmers": {
+        const totalEarned = data.reduce(
+          (s, r) => s + Number(r.total_earned || 0),
+          0
+        );
+        return [
+          {
+            label: "Total Paid to Farmers",
+            value: `${totalEarned.toLocaleString()} Rwf`,
+          },
+        ];
+      }
+      default:
+        return [];
     }
-    if (type === "sales") {
-      const totalRevenue = data.reduce(
-        (s, r) => s + Number(r.total_revenue || 0),
-        0
-      );
-      const totalOrders = data.reduce(
-        (s, r) => s + Number(r.order_count || 0),
-        0
-      );
-      return [
-        {
-          label: "Total Sales Revenue",
-          value: `${totalRevenue.toLocaleString()} Rwf`,
-        },
-        { label: "Orders Processed", value: totalOrders },
-      ];
-    }
-    if (type === "farmers") {
-      const totalEarned = data.reduce(
-        (s, r) => s + Number(r.total_earned || 0),
-        0
-      );
-      return [
-        {
-          label: "Total Paid to Farmers",
-          value: `${totalEarned.toLocaleString()} Rwf`,
-        },
-      ];
-    }
-    return [];
   };
 
-  const totals = getTotals(data, activeTab);
+  const totals = getTotals(activeTab);
 
-  // ✅ Export functions
+  // ✅ Export handlers
   const handleExport = (format) => {
-    if (!data || data.length === 0) return alert("No data to export");
+    if (!data.length) return alert("No data to export");
 
     try {
       if (format === "csv") {
         const headers = Object.keys(data[0]);
         const csvRows = [
-          headers.join(","), // header row
-          ...data.map((row) =>
-            headers.map((field) => JSON.stringify(row[field] ?? "")).join(",")
+          headers.join(","),
+          ...data.map((r) =>
+            headers.map((f) => JSON.stringify(r[f] ?? "")).join(",")
           ),
         ];
-        const csvContent = csvRows.join("\n");
-        const blob = new Blob([csvContent], {
-          type: "text/csv;charset=utf-8;",
-        });
+        const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = `${activeTab}_report.csv`;
@@ -1309,15 +1974,9 @@ export function ReportsDashboard() {
         XLSX.writeFile(wb, `${activeTab}_report.xlsx`);
       } else if (format === "pdf") {
         const element = document.getElementById("report-content");
-        if (!element) return alert("⚠️ Report not ready for PDF export");
-        html2canvas(element, {
-          scale: 2,
-          backgroundColor: "#ffffff",
-          useCORS: true,
-          foreignObjectRendering: true,
-        }).then((canvas) => {
-          const imgData = canvas.toDataURL("image/png");
+        html2canvas(element, { scale: 2 }).then((canvas) => {
           const pdf = new jsPDF("p", "mm", "a4");
+          const imgData = canvas.toDataURL("image/png");
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
           pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
@@ -1326,12 +1985,11 @@ export function ReportsDashboard() {
       }
     } catch (err) {
       console.error("Export error:", err);
-      alert("⚠️ Export failed. Please try again.");
+      alert("Export failed. Try again.");
     }
   };
 
-  // ✅ Simple manual button component
-  const CustomButton = ({ children, onClick, color }) => (
+  const CustomButton = ({ onClick, color, children }) => (
     <button
       onClick={onClick}
       className={`px-4 py-2 rounded-md text-white font-medium flex items-center gap-2 transition-all ${
@@ -1346,6 +2004,78 @@ export function ReportsDashboard() {
     </button>
   );
 
+  // ✅ Formatters
+  const formatDate = (val) =>
+    new Date(val).toLocaleDateString("en-GB", {
+      month: "short",
+      year: "numeric",
+    });
+
+  // ✅ Chart builder
+  const renderChart = () => {
+    if (!data.length) return null;
+
+    switch (activeTab) {
+      case "revenue":
+        return (
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" tickFormatter={formatDate} />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="hub_revenue"
+              stroke="#10B981"
+              name="Hub Revenue"
+            />
+            <Line
+              type="monotone"
+              dataKey="farmer_amount"
+              stroke="#3B82F6"
+              name="Farmer Amount"
+            />
+            <Line
+              type="monotone"
+              dataKey="total_amount"
+              stroke="#F59E0B"
+              name="Total Revenue"
+            />
+          </LineChart>
+        );
+
+      case "sales":
+        return (
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="produce_name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="total_revenue" fill="#10B981" name="Total Revenue" />
+            <Bar dataKey="total_quantity" fill="#3B82F6" name="Quantity Sold" />
+          </BarChart>
+        );
+
+      case "farmers":
+        return (
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="full_name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="total_earned" fill="#10B981" name="Total Earned" />
+            <Bar dataKey="total_deliveries" fill="#3B82F6" name="Deliveries" />
+          </BarChart>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -1353,8 +2083,8 @@ export function ReportsDashboard() {
         <h1 className="text-2xl font-semibold text-emerald-700">
           Reports Dashboard
         </h1>
-        <div className="flex gap-2">
-          <div className="flex">
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex border-b">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1370,6 +2100,7 @@ export function ReportsDashboard() {
               </button>
             ))}
           </div>
+
           <input
             type="date"
             value={startDate}
@@ -1382,45 +2113,23 @@ export function ReportsDashboard() {
             onChange={(e) => setEndDate(e.target.value)}
             className="border border-gray-300 rounded-md px-2 py-1 text-sm"
           />
+
           <CustomButton color="green" onClick={fetchReports}>
             Apply
           </CustomButton>
-          {/* Export buttons */}
           <CustomButton color="green" onClick={() => handleExport("pdf")}>
-            <FileDown size={16} /> Export PDF
+            <FileDown size={16} /> PDF
           </CustomButton>
           <CustomButton color="blue" onClick={() => handleExport("csv")}>
-            <FileDown size={16} /> Export CSV
+            <FileDown size={16} /> CSV
           </CustomButton>
           <CustomButton color="amber" onClick={() => handleExport("xlsx")}>
-            <FileDown size={16} /> Export Excel
+            <FileDown size={16} /> Excel
           </CustomButton>
         </div>
       </div>
 
-      {/* Tabs
-      <div className=" flex flex-col-reverse flex-cols-2 ">
-        <div className="flex gap-2 mb-6 border-b">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1 px-4 py-2 rounded-t-md transition-all ${
-                activeTab === tab.id
-                  ? "bg-emerald-600 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        
-      </div> */}
-
-      {/* Report content */}
+      {/* Report Content */}
       <div
         id="report-content"
         className="bg-white rounded-xl shadow-md border border-gray-200 p-6"
@@ -1429,11 +2138,11 @@ export function ReportsDashboard() {
           <p className="text-center text-gray-400">Loading...</p>
         ) : (
           <>
-            {/* Totals summary */}
+            {/* Totals Summary */}
             <div className="grid md:grid-cols-3 gap-4 mb-6">
-              {totals.map((item, idx) => (
+              {totals.map((item, i) => (
                 <div
-                  key={idx}
+                  key={i}
                   className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 shadow-sm"
                 >
                   <p className="text-sm text-gray-600">{item.label}</p>
@@ -1444,8 +2153,29 @@ export function ReportsDashboard() {
               ))}
             </div>
 
-            {/* Table */}
-            {Array.isArray(data) && data.length > 0 ? (
+            {/* Charts */}
+            {data.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white border border-emerald-100 rounded-lg shadow-sm p-4 mb-6"
+              >
+                <h2 className="text-lg font-semibold text-emerald-700 mb-3">
+                  {activeTab === "revenue"
+                    ? "Revenue Trends"
+                    : activeTab === "sales"
+                    ? "Sales Overview"
+                    : "Farmers Statistics"}
+                </h2>
+                <ResponsiveContainer width="100%" height={350}>
+                  {renderChart()}
+                </ResponsiveContainer>
+              </motion.div>
+            )}
+
+            {/* Data Table */}
+            {data.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full border text-sm">
                   <thead className="bg-emerald-50">
