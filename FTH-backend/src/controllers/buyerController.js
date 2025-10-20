@@ -103,9 +103,11 @@ exports.browseProducts = async (req, res) => {
     }
 
     if (search) {
-      query += ` AND (l.produce_name ILIKE $${paramCount++} OR l.category ILIKE $${paramCount})`;
+      query += ` AND (l.produce_name ILIKE $${paramCount} OR l.category ILIKE $${
+        paramCount + 1
+      })`;
       params.push(`%${search}%`, `%${search}%`);
-      paramCount++;
+      paramCount += 2;
     }
 
     query += ` ORDER BY l.posted_at DESC LIMIT $${paramCount++} OFFSET $${paramCount}`;
