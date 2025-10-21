@@ -2018,7 +2018,10 @@ export function ReportsDashboard() {
     switch (activeTab) {
       case "revenue":
         return (
-          <LineChart data={data}>
+          <LineChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 40, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" tickFormatter={formatDate} />
             <YAxis />
@@ -2047,7 +2050,10 @@ export function ReportsDashboard() {
 
       case "sales":
         return (
-          <BarChart data={data}>
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 40, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="produce_name" />
             <YAxis />
@@ -2060,7 +2066,10 @@ export function ReportsDashboard() {
 
       case "farmers":
         return (
-          <BarChart data={data}>
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 40, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="full_name" />
             <YAxis />
@@ -2146,7 +2155,7 @@ export function ReportsDashboard() {
                   className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 shadow-sm"
                 >
                   <p className="text-sm text-gray-600">{item.label}</p>
-                  <p className="text-xl font-semibold text-emerald-700 mt-1">
+                  <p className="text-xl font-semibold text-emerald-700 mt-1 ">
                     {item.value}
                   </p>
                 </div>
@@ -2161,14 +2170,14 @@ export function ReportsDashboard() {
                 transition={{ duration: 0.5 }}
                 className="bg-white border border-emerald-100 rounded-lg shadow-sm p-4 mb-6"
               >
-                <h2 className="text-lg font-semibold text-emerald-700 mb-3">
+                <h2 className="text-lg font-semibold text-emerald-700 mb-3 ">
                   {activeTab === "revenue"
                     ? "Revenue Trends"
                     : activeTab === "sales"
                     ? "Sales Overview"
                     : "Farmers Statistics"}
                 </h2>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer width="100%" height={460}>
                   {renderChart()}
                 </ResponsiveContainer>
               </motion.div>
