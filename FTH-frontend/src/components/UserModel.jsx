@@ -1,4 +1,3 @@
-// src/components/FarmerModal.jsx
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -12,7 +11,6 @@ import {
   Lock,
 } from "lucide-react";
 import { clerkAPI } from "../services/api";
-import { useAPICall } from "../hooks/useAPI";
 
 export default function UserModal({
   isOpen,
@@ -33,14 +31,13 @@ export default function UserModal({
   const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Populate form if editing
   useEffect(() => {
     if (editFarmer) {
       setFormData({
         fullName: editFarmer.full_name || "",
         phone: editFarmer.phone || "",
         email: editFarmer.email || "",
-        password: "", // Don't populate password for security
+        password: "",
         location: editFarmer.metadata?.location || "",
         isActive: editFarmer.is_active ?? true,
       });
@@ -62,8 +59,6 @@ export default function UserModal({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const newErrors = { ...prev };
@@ -75,43 +70,27 @@ export default function UserModal({
 
   const validateForm = () => {
     const errors = {};
-
-    if (!formData.fullName || formData.fullName.trim().length === 0) {
-      errors.fullName = "Full name is required";
-    }
-
-    if (!formData.phone || formData.phone.trim().length === 0) {
-      errors.phone = "Phone number is required";
-    } else if (!/^\+?[\d\s-]{10,}$/.test(formData.phone)) {
+    if (!formData.fullName?.trim()) errors.fullName = "Full name is required";
+    if (!formData.phone?.trim()) errors.phone = "Phone number is required";
+    else if (!/^\+?[\d\s-]{10,}$/.test(formData.phone))
       errors.phone = "Please enter a valid phone number";
-    }
-
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       errors.email = "Please enter a valid email address";
-    }
-
-    // Password required only when adding new farmer
-    if (!editFarmer && (!formData.password || formData.password.length < 6)) {
+    if (!editFarmer && (!formData.password || formData.password.length < 6))
       errors.password = "Password must be at least 6 characters";
-    }
-
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setLoading(true);
       setError("");
 
       if (editFarmer) {
-        // Update farmer
         await clerkAPI.updateFarmer(editFarmer.id, {
           fullName: formData.fullName,
           email: formData.email || null,
@@ -119,7 +98,6 @@ export default function UserModal({
           isActive: formData.isActive,
         });
       } else {
-        // Add new farmer
         await clerkAPI.addFarmer({
           fullName: formData.fullName,
           phone: formData.phone,
@@ -132,10 +110,10 @@ export default function UserModal({
       setSuccess(true);
       setTimeout(() => {
         handleClose();
-        if (onSuccess) onSuccess();
+        onSuccess?.();
       }, 1500);
     } catch (err) {
-      setError(err || "Failed to save farmer");
+      setError(err.message || "Failed to save farmer");
       console.error("Error saving farmer:", err);
     } finally {
       setLoading(false);
@@ -162,7 +140,6 @@ export default function UserModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">
             {editFarmer ? "Edit Farmer" : "Add New Farmer"}
@@ -174,8 +151,6 @@ export default function UserModal({
             <X size={24} />
           </button>
         </div>
-
-        {/* Form Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
           {success ? (
             <div className="text-center py-8">
@@ -194,7 +169,6 @@ export default function UserModal({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Banner */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                   <AlertCircle
@@ -245,7 +219,7 @@ export default function UserModal({
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    disabled={editFarmer !== null}
+                    disabled={!!editFarmer}
                     placeholder="+250 788 123 456"
                     className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all ${
                       editFarmer ? "bg-neutral-100 cursor-not-allowed" : ""
@@ -292,7 +266,7 @@ export default function UserModal({
                   )}
                 </div>
 
-                {/* Password - Only show when adding new farmer */}
+                {/* Password */}
                 {!editFarmer && (
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-neutral-700 mb-2">
@@ -335,7 +309,7 @@ export default function UserModal({
                   />
                 </div>
 
-                {/* Active Status - Only show when editing */}
+                {/* Active */}
                 {editFarmer && (
                   <div className="md:col-span-2">
                     <label className="flex items-center gap-3 p-4 border border-neutral-300 rounded-xl cursor-pointer hover:bg-neutral-50 transition-colors">
@@ -359,7 +333,7 @@ export default function UserModal({
                 )}
               </div>
 
-              {/* Action Buttons */}
+              {/* Buttons */}
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
@@ -376,12 +350,12 @@ export default function UserModal({
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="animate-spin" size={20} />
+                      <Loader2 className="animate-spin" size={20} />{" "}
                       {editFarmer ? "Updating..." : "Adding..."}
                     </>
                   ) : (
                     <>
-                      <CheckCircle size={20} />
+                      <CheckCircle size={20} />{" "}
                       {editFarmer ? "Update Farmer" : "Add Farmer"}
                     </>
                   )}
