@@ -4,7 +4,7 @@ Thank you for helping us build a transparent agricultural marketplace for Rwanda
 
 ---
 
-## 🛠️ Local Development Setup
+## Local Development Setup
 
 ### Prerequisites
 * **Node.js** (v18+)
@@ -29,7 +29,7 @@ Thank you for helping us build a transparent agricultural marketplace for Rwanda
 
 ---
 
-## 🔄 Git Workflow & Branching
+## Git Workflow & Branching
 
 We use a standard feature-branch workflow. 
 
@@ -41,7 +41,7 @@ We use a standard feature-branch workflow.
 
 ---
 
-## 🎨 Code Style & Standards
+## Code Style & Standards
 
 ### Frontend (React & Tailwind CSS)
 * Use functional components with hooks.
@@ -55,7 +55,7 @@ We use a standard feature-branch workflow.
 
 ---
 
-## 🚀 Submitting a Pull Request (PR)
+## Submitting a Pull Request (PR)
 
 1. Ensure your code builds locally without errors.
 2. Open a PR against the `main` branch.
