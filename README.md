@@ -1,11 +1,11 @@
 
-# 🌾 Farmers Trade Hub (FTH)
+# Farmers Trade Hub (FTH) 🌾
 
 A modern digital agricultural marketplace connecting farmers, collection hubs, transporters, and buyers across Rwanda.
 
 ---
 
-# 📖 Project Overview
+# Project Overview
 
 Farmers Trade Hub (FTH) is a web-based platform designed to reduce post-harvest losses, improve market accessibility, and create transparent agricultural trade between farmers and buyers.
 
@@ -13,7 +13,7 @@ The platform allows hub managers to record farmer harvest deliveries, manage inv
 
 ---
 
-# 🎯 Project Objectives
+# Project Objectives
 
 ## General Objective
 To develop a digital agricultural trading platform that connects farmers with buyers, reduces post-harvest losses, and improves efficient market access in Rwanda.
@@ -30,7 +30,7 @@ To develop a digital agricultural trading platform that connects farmers with bu
 
 ---
 
-# 👥 System Users
+# System Users
 
 ## 1. Admin
 - Manage users
@@ -63,55 +63,55 @@ To develop a digital agricultural trading platform that connects farmers with bu
 
 ---
 
-# ⚙️ Core Features
+# Core Features
 
-## 🌾 Farmer Management
+## Farmer Management
 - Farmer registration
 - Farmer profile management
 - Farmer delivery history
 
-## 📦 Harvest Collection
+## Harvest Collection
 - Record harvest deliveries
 - Generate digital receipts
 - Track inventory quantities
 
-## 🏪 Inventory Management
+## Inventory Management
 - Store available harvests
 - Track stock quantities
 - Monitor sold and available produce
 
-## 🛒 Buyer Marketplace
+## Buyer Marketplace
 - Browse available products
 - Place orders
 - Track order status
 
-## 💳 Payments
+## Payments
 - Mobile Money integration
 - Bank payment support
 - Farmer payouts
 - Buyer payment tracking
 
-## 🔔 Notifications
+## Notifications
 - SMS notifications
 - Payment confirmations
 - Order updates
 - Delivery alerts
 
-## 📊 Reports & Analytics
+## Reports & Analytics
 - Daily deliveries
 - Sales reports
 - Farmer payout reports
 - Inventory reports
 - Revenue tracking
 
-## 📱 Responsive Design
+## Responsive Design
 - Mobile friendly
 - Tablet compatible
 - Desktop optimized
 
 ---
 
-# 🧱 System Architecture
+# System Architecture
 
 ## Frontend
 Modern responsive web application built using:
@@ -142,7 +142,7 @@ REST API server built using:
 
 ---
 
-# 🗂️ Project Structure
+# Project Structure
 
 ## Frontend Structure
 
@@ -191,7 +191,7 @@ FTH-backend/
 
 ---
 
-# 🛠️ Technologies Used
+# Technologies Used
 
 | Technology     | Purpose             |
 | -------------- | ------------------- |
@@ -211,7 +211,7 @@ FTH-backend/
 
 # 🚀 Installation & Setup
 
-# 1️⃣ Clone Repository
+# 1.Clone Repository
 
 ```bash
 git clone https://github.com/Alicade123/Final-Year-Project.git
@@ -219,7 +219,7 @@ git clone https://github.com/Alicade123/Final-Year-Project.git
 
 ---
 
-# 2️⃣ Frontend Setup
+# 2.Frontend Setup
 
 ```bash
 cd FTH-frontend
@@ -237,7 +237,7 @@ http://localhost:5173
 
 ---
 
-# 3️⃣ Backend Setup
+# 3.Backend Setup
 
 ```bash
 cd FTH-backend
@@ -273,7 +273,7 @@ http://localhost:5000
 
 ---
 
-# 🗄️ Database Design (Core Tables)
+# Database Design (Core Tables)
 
 ## Users
 
@@ -323,7 +323,7 @@ http://localhost:5000
 
 ---
 
-# 🔐 Security Features
+# Security Features
 
 * JWT Authentication
 * Password hashing using bcrypt
@@ -334,7 +334,7 @@ http://localhost:5000
 
 ---
 
-# 📈 Future Enhancements
+# Future Enhancements
 
 * AI price prediction
 * Real-time logistics tracking
@@ -346,7 +346,7 @@ http://localhost:5000
 
 ---
 
-# 🧪 Testing
+# Testing
 
 Planned testing includes:
 
@@ -358,7 +358,7 @@ Planned testing includes:
 
 ---
 
-# 📌 Development Phases
+# Development Phases
 
 ## Phase 1
 
@@ -392,7 +392,7 @@ Planned testing includes:
 
 ---
 
-# 📷 Key Screens
+# Key Screens
 
 Planned interfaces include:
 
@@ -407,7 +407,7 @@ Planned interfaces include:
 
 ---
 
-# 🌍 Project Scope
+# Project Scope
 
 The system is designed to support:
 
@@ -422,16 +422,16 @@ Initially focused on Rwanda with scalability for regional expansion.
 
 ---
 
-# 👨‍💻 Developers
+# Developers
 
-### Alicade ft Mugisha
+### [Alicade](https://github.com/Alicade123) ft [Mugisha](https://github.com/MUGISHAJD)
 
 Final Year IT Students
 RP Kigali College — Rwanda
 
 ---
 
-# 📚 References
+# References
 
 * Rwanda Agricultural Development Policies
 * Agricultural E-Commerce Studies
@@ -440,7 +440,7 @@ RP Kigali College — Rwanda
 
 ---
 
-# 📄 License
+# License
 
 This project is developed for educational and academic purposes.
 
